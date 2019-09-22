@@ -2,7 +2,9 @@
 title: "Lecture 1"
 author: "Marc Kaufmann"
 date: "9/10/2019"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -192,7 +194,7 @@ As you can see, some datasets are conveniently bundled for you as libraries.
 
 This assignment is due before the start of class 2. Commit your knitted assignment2.html to your git and push it to your repository regularly as you make progress.
 
-- Only your work until ___23rd of Sept., Monday 1:30 pm____ (EXERCISE) will be considered. 
+- Only your work until ___23rd of Sept., Monday 1:30 pm___ (EXERCISE) will be considered. 
 - If you know that you might miss the deadline, you have to email me in advance and I will tell you whether you can get an extension. No extension will be granted less than 24 hours prior to the deadline -- you should have started working on it.
 - If you miss the deadline (even by 1 minute) you lose 25% irrespective of technical issues such as 'the internet went down'. It wasn't down the whole week, and you knew a deadline was coming. In a business setting, you would probably lose more than 25%. Repeat offenders will face an increasingly large penalty.
 - If you struggle *answering* the assignment, you should submit what you tried, and send me a message that you struggled. Much of the grade initially is on trying out things, even if it doesn't work out, so you should submit.
