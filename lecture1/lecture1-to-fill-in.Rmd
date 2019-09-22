@@ -242,6 +242,18 @@ Track as many error messages as possible that you made during this week (stop on
 # -> Error in "4" - "3" : non-numeric argument to binary operator
 
 # Your examples below
+
+help(class()) 
+# -> Error in help(class()) : 'topic' should be a name, length-one character vector or reserved word
+
+mean()
+# -> Error in mean.default() : argument "x" is missing, with no default
+
+library(msc_ba)
+# -> Error in library(msc_ba) : there is no package called ‘msc_ba’
+
+False
+# -> Error: object 'False' not found
 ```
 
 Post one of these 4 errors on discourse.
