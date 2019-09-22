@@ -458,7 +458,7 @@ languages_heard_of &lt;- c(11)</code></pre>
 <pre class="r"><code>mean</code></pre>
 <pre><code>## function (x, ...) 
 ## UseMethod(&quot;mean&quot;)
-## &lt;bytecode: 0x00000000098110f8&gt;
+## &lt;bytecode: 0x00000000098213d0&gt;
 ## &lt;environment: namespace:base&gt;</code></pre>
 <p>When we <em>call</em> it, we put parentheses at the end, and we tell it what to perform its action on:</p>
 <p><strong>Exercise:</strong> What happens if you call the function <span class="math inline">\(mean\)</span> without any arguments, i.e. <span class="math inline">\(mean()\)</span>?</p>
@@ -481,7 +481,8 @@ languages_heard_of &lt;- c(11)</code></pre>
 <p>For built-in functions, you can also ask for help or bring up the documentation with ‘help()’ or ‘?’ or ‘??’:</p>
 <p><strong>Exercise:</strong> What do ‘class()’ and ‘str()’ do? Use ‘help’ (or ‘?’). Don’t spend too much time reading the docs. Which description do you find more helpful?</p>
 <p><strong>Answer</strong></p>
-<p>class(): a simple generic function mechanism of R which can be used for an object-oriented style of programming. When run in itself with one argument, it returns the type of class its argument belongs to str(): compactly displays the internal structure of an R object, a diagnostic function and an alternative to summary</p>
+<p>class(): a simple generic function mechanism of R which can be used for an object-oriented style of programming. When run in itself with one argument, it returns the type of class its argument belongs to</p>
+<p>str(): compactly displays the internal structure of an R object, a diagnostic function and an alternative to summary</p>
 <p>str()’s description was more helpful.</p>
 </div>
 <div id="make-your-first-figure" class="section level3">
@@ -509,6 +510,13 @@ languages_heard_of &lt;- c(11)</code></pre>
 <h3>Part 3</h3>
 <p>Fill in the holes in the lecture notes of lecture 1, if you didn’t complete it during class. When done, knit the document, commit the changes with the commit message “Part 3 of assignment 2” and push them to your GitHub repository.</p>
 <p>Knit the slides for class 1 to html and/or pdf, commit the .Rmd and .html files – but not the pdf – and push. If the pdf is hard to get working (due to weird error messages), see whether you can find out <em>what</em> the problem is (Stackoverflow, Discourse…) without trying to solve it yet. Pdf and Latex issues can be… interesting shall we say.</p>
+<p>I get an error message while trying to compile the pdf. I previously used LaTeX and I have MikTeX 2.9. The error message I get is:</p>
+<p>! Sorry, but C:<sub>1</sub>1.964.exe did not succeed.</p>
+<p>! The log file hopefully contains the information to get MiKTeX going again:</p>
+<p>! C:/Users/Palotai Veronika/AppData/Local/MiKTeX/2.9/miktex/log/xelatex.log</p>
+<p>! You may want to visit the MiKTeX project page, if you need help.</p>
+<p>Error: Failed to compile lecture1-slides.tex. See <a href="https://yihui.name/tinytex/r/#debugging" class="uri">https://yihui.name/tinytex/r/#debugging</a> for debugging tips. See lecture1-slides.log for more info. Execution halted</p>
+<p>The suggested log file says: GUI framework cannot be initialized.</p>
 <p><strong>Note:</strong> If you can’t figure out how to use git, post a question on the discourse forum and send me the html file by email.</p>
 </div>
 <div id="part-4" class="section level3">
@@ -519,7 +527,19 @@ languages_heard_of &lt;- c(11)</code></pre>
 &quot;4&quot; - &quot;3&quot;
 # -&gt; Error in &quot;4&quot; - &quot;3&quot; : non-numeric argument to binary operator
 
-# Your examples below</code></pre>
+# Your examples below
+
+help(class()) 
+# -&gt; Error in help(class()) : &#39;topic&#39; should be a name, length-one character vector or reserved word
+
+mean()
+# -&gt; Error in mean.default() : argument &quot;x&quot; is missing, with no default
+
+library(msc_ba)
+# -&gt; Error in library(msc_ba) : there is no package called ‘msc_ba’
+
+False
+# -&gt; Error: object &#39;False&#39; not found</code></pre>
 <p>Post one of these 4 errors on discourse.</p>
 </div>
 <div id="part-5" class="section level3">
