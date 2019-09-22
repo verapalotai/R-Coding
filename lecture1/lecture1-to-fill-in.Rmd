@@ -213,6 +213,21 @@ Fill in the holes in the lecture notes of lecture 1, if you didn't complete it d
 
 Knit the slides for class 1 to html and/or pdf, commit the .Rmd and .html files -- but not the pdf -- and push. If the pdf is hard to get working (due to weird error messages), see whether you can find out *what* the problem is (Stackoverflow, Discourse...) without trying to solve it yet. Pdf and Latex issues can be... interesting shall we say.
 
+I get an error message while trying to compile the pdf. I previously used LaTeX and I have MikTeX 2.9. The error message I get is: 
+
+! Sorry, but C:\PROGRA~1\MIKTEX~1.9\miktex\bin\x64\xelatex.exe did not succeed.
+
+! The log file hopefully contains the information to get MiKTeX going again:
+
+!   C:/Users/Palotai Veronika/AppData/Local/MiKTeX/2.9/miktex/log/xelatex.log
+
+! You may want to visit the MiKTeX project page, if you need help.
+
+Error: Failed to compile lecture1-slides.tex. See https://yihui.name/tinytex/r/#debugging for debugging tips. See lecture1-slides.log for more info.
+Execution halted
+
+The suggested log file says: GUI framework cannot be initialized.
+
 **Note:** If you can't figure out how to use git, post a question on the discourse forum and send me the html file by email.
 
 ### Part 4
