@@ -28,15 +28,25 @@ Everything that you use in R has a name: variables (including datasets), functio
 
 ```{r, eval=FALSE}
 # Numbers are called by their number, arithmetic operations by their usual symbol
+2
+9
+2 + 3
+2^4
+2**5
+4 * 7
+10 %% 4
 
 # There are some pre-defined variables
+pi
 
 # There are also pre-defined functions
+c()
+summary()
 ```
 
 **Some Notes**:
 
-- '#' is the _________ (EXERCISE) sign. It tells R that everything that follows is a comment and R should ignore it. Comments are there to help explain parts of the code that need additional documentation. We will overuse them initially, but reduce this as the course proceeds.
+- '#' is the __comment__ (EXERCISE) sign. It tells R that everything that follows is a comment and R should ignore it. Comments are there to help explain parts of the code that need additional documentation. We will overuse them initially, but reduce this as the course proceeds.
 - c, "c", and "C" are not the same things
 - Naming conventions: When you name variables and functions, you should use snake case.
 
@@ -44,15 +54,32 @@ Everything that you use in R has a name: variables (including datasets), functio
 
 ```{r, exercise1, eval=FALSE}
 3         # -> 3
-7 %% 3    # -> ?
-False     # -> ?
-'pi'      # -> ?
-FALSE     # -> ?
+7 %% 3    # -> 1
+False     # -> Error: object 'False' not found
+'pi'      # -> "pi"
+FALSE     # -> FALSE
 ```
 
 **Exercise:** Look up what 'snake case' is and add your answer here.
 
+**Answer**
+
+Snake case (or snake_case) is the practice of writing compound words or phrases in which the elements are separated with one underscore character (_) and no spaces, with each element's initial letter usually lowercased within the compound and the first letter either upper- or lowercase—as in "foo_bar" and "Hello_world". (Source: https://en.wikipedia.org/wiki/Snake_case)
+
 **Exercise:** What types of names are allowed in R? Look it up and write your answer here as you understand it. Then provide 3 examples of things that are not valid names in R for different reasons. 
+
+**Answer**
+
+A valid variable name in R can contain letters, numbers, the dot or the underline characters. The variable name has to start with a letter or the dot character not followed by a number.
+
+Invalid variable names:
+
+389_my_var (starts with a number)
+
+_my_var (start with underline character)
+
+my_var! (contains the ! character which is not allowed)
+
 
 #### Everything is an object
 
@@ -112,6 +139,10 @@ When we *call* it, we put parentheses at the end, and we tell it what to perform
 
 **Exercise:** What happens if you call the function $mean$ without any arguments, i.e. $mean()$?
 
+**Answer**
+
+The Output is 'Error in mean.default() : argument "x" is missing, with no default'.
+
 #### Functions come in packages
 
 As you may start to realize, lots of functions already exist, such as $mean()$ and $sd()$ and $c()$. There are many more functions that were written by other people and bundled into packages so that you can use them. Many packages come bundled with R from the start (base R), while you can install others on your system via 'install.packages()' and use via 'library()'. We will soon use the 'ggplot()' function. Try using it now:
@@ -143,6 +174,13 @@ For built-in functions, you can also ask for help or bring up the documentation 
 
 **Exercise:** What do 'class()' and 'str()' do? Use 'help' (or '?'). Don't spend too much time reading the docs. Which description do you find more helpful?
 
+**Answer**
+
+class(): a simple generic function mechanism of R which can be used for an object-oriented style of programming. When run in itself with one argument, it returns the type of class its argument belongs to
+str(): compactly displays the internal structure of an R object, a diagnostic function and an alternative to summary
+
+str()'s description was more helpful.
+
 ### Make Your First Figure
 
 ```{r, gapminder}
@@ -154,7 +192,7 @@ As you can see, some datasets are conveniently bundled for you as libraries.
 
 This assignment is due before the start of class 2. Commit your knitted assignment2.html to your git and push it to your repository regularly as you make progress.
 
-- Only your work until _________ (EXERCISE) will be considered. 
+- Only your work until ___23rd of Sept., Monday 1:30 pm____ (EXERCISE) will be considered. 
 - If you know that you might miss the deadline, you have to email me in advance and I will tell you whether you can get an extension. No extension will be granted less than 24 hours prior to the deadline -- you should have started working on it.
 - If you miss the deadline (even by 1 minute) you lose 25% irrespective of technical issues such as 'the internet went down'. It wasn't down the whole week, and you knew a deadline was coming. In a business setting, you would probably lose more than 25%. Repeat offenders will face an increasingly large penalty.
 - If you struggle *answering* the assignment, you should submit what you tried, and send me a message that you struggled. Much of the grade initially is on trying out things, even if it doesn't work out, so you should submit.

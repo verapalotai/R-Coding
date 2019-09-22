@@ -1,0 +1,414 @@
+\PassOptionsToPackage{unicode=true}{hyperref} % options for packages loaded elsewhere
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+  ignorenonframetext,
+]{beamer}
+\usepackage{pgfpages}
+\setbeamertemplate{caption}[numbered]
+\setbeamertemplate{caption label separator}{: }
+\setbeamercolor{caption name}{fg=normal text.fg}
+\beamertemplatenavigationsymbolsempty
+% Prevent slide breaks in the middle of a paragraph:
+\widowpenalties 1 10000
+\raggedbottom
+\setbeamertemplate{part page}{
+  \centering
+  \begin{beamercolorbox}[sep=16pt,center]{part title}
+    \usebeamerfont{part title}\insertpart\par
+  \end{beamercolorbox}
+}
+\setbeamertemplate{section page}{
+  \centering
+  \begin{beamercolorbox}[sep=12pt,center]{part title}
+    \usebeamerfont{section title}\insertsection\par
+  \end{beamercolorbox}
+}
+\setbeamertemplate{subsection page}{
+  \centering
+  \begin{beamercolorbox}[sep=8pt,center]{part title}
+    \usebeamerfont{subsection title}\insertsubsection\par
+  \end{beamercolorbox}
+}
+\AtBeginPart{
+  \frame{\partpage}
+}
+\AtBeginSection{
+  \ifbibliography
+  \else
+    \frame{\sectionpage}
+  \fi
+}
+\AtBeginSubsection{
+  \frame{\subsectionpage}
+}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provides euro and other symbols
+\else % if luatex or xelatex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usetheme[]{metropolis}
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={Coding 1: Lecture 1},
+  pdfborder={0 0 0},
+  breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\newif\ifbibliography
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-2}
+
+% set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+
+
+\title{Coding 1: Lecture 1}
+\author{Marc Kaufmann\\
+Central European University}
+\date{9/10/2019}
+
+\begin{document}
+\frame{\titlepage}
+
+\hypertarget{coding-1-data-management-and-analysis-with-r}{%
+\section{Coding 1: Data Management and Analysis with
+R}\label{coding-1-data-management-and-analysis-with-r}}
+
+\begin{frame}{Basic Admin}
+\protect\hypertarget{basic-admin}{}
+
+\begin{itemize}
+\tightlist
+\item
+  Weeks 1 to 6: Mondays 13:30-15:10
+\item
+  Weeks 7 to 12: Mondays 17:30-19:10
+\item
+  Instructor: Marc Kaufmann (call me Marc)
+\item
+  Teaching Assistant: Júlia Hermann gives 3 sessions
+
+  \begin{itemize}
+  \tightlist
+  \item
+    17:30-19:10 on Tuesday October 8th
+  \item
+    17:30-19:10 on Tuesday November 5th
+  \item
+    17:30-19:10 on Tuesday November 19th
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{Who am I?}
+\protect\hypertarget{who-am-i}{}
+
+\pause{}
+
+\begin{itemize}
+\tightlist
+\item
+  Assistant Professor in Economics and Business
+\item
+  Research in Psychology and Economics (aka Behavioral Economics)
+\end{itemize}
+
+\pause{}
+
+Relevant for this class:
+
+\begin{itemize}
+\tightlist
+\item
+  Collect my own data in (mostly online) experiments
+\item
+  Analyze said data: Fairly basic, since design is up to me
+\item
+  Program in Racket, bash/unix, Python, and R (in that order of
+  competence)
+\end{itemize}
+
+\pause{}
+
+Most importantly: I am good at getting help.
+
+\end{frame}
+
+\begin{frame}[fragile]{Goal for the class in one sentence}
+\protect\hypertarget{goal-for-the-class-in-one-sentence}{}
+
+\pause{}
+
+\begin{quote}
+Generate basic insights\pause{} from existing data\pause{} that is
+small\pause{} and relational\pause{} in a reproducible and replicable
+manner.
+\end{quote}
+
+\pause{}
+
+Or expressed in R (pseudo-)code:
+
+\pause{}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(msc_ba)}
+
+\NormalTok{eureka_or_bust <-}\StringTok{ }\NormalTok{your_great_ideas }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\CommentTok{# We need data to figure this out. Let's...}
+\StringTok{  }\KeywordTok{collect_data}\NormalTok{() }\OperatorTok{%>%}
+\StringTok{  }\CommentTok{# Apply knowledge from this class...}
+\StringTok{  }\KeywordTok{code_1}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\end{frame}
+
+\begin{frame}[fragile]{Goals of the Course}
+\protect\hypertarget{goals-of-the-course}{}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{code_}\DecValTok{1}\NormalTok{ <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(collected_data) \{ }
+\NormalTok{  collected_data }\OperatorTok{%>%}\StringTok{ }
+\StringTok{    }\KeywordTok{read_in}\NormalTok{() }\OperatorTok{%>%}
+\StringTok{    }\KeywordTok{explore}\NormalTok{() }\OperatorTok{%>%}
+\StringTok{    }\KeywordTok{visualize}\NormalTok{() }\OperatorTok{%>%}
+\StringTok{    }\KeywordTok{summarize}\NormalTok{() }\OperatorTok{%>%}
+\StringTok{    }\KeywordTok{clean}\NormalTok{() }\OperatorTok{%>%}
+\StringTok{    }\KeywordTok{tidy}\NormalTok{() }\OperatorTok{%>%}
+\StringTok{    }\KeywordTok{analyze}\NormalTok{() }\OperatorTok{%>%}
+\StringTok{    }\KeywordTok{knit}\NormalTok{()}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\end{frame}
+
+\begin{frame}{Focus of the Class}
+\protect\hypertarget{focus-of-the-class}{}
+
+Since we cover much of the data analysis cycle and have little time:
+
+\begin{itemize}
+\tightlist
+\item
+  Focus on few libraries and commands (80/20 rule)
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Tidyverse only: coherent set of tools with sane interface
+  \end{itemize}
+\item
+  Focus on correct code; then maintainable; then fast
+\item
+  Focus on \emph{fluency}
+\item
+  Focus on teaching you how to learn
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Clean code; documenting; debugging; communicating
+  \item
+    How to get help
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{Focus of the Class}
+\protect\hypertarget{focus-of-the-class-1}{}
+
+\begin{quote}
+Strive to write code that is correct; maintainable; and fast. The
+ordering of these adjectives is critical: correct is more important than
+maintainable; maintainable is more important than fast; and fast is
+important to include, because nobody wants to live with slow programs.
+
+From ``How to Program Racket: a Style Guide'', Felleisen et al
+\end{quote}
+
+\end{frame}
+
+\begin{frame}{Assignments and Grading}
+\protect\hypertarget{assignments-and-grading}{}
+
+\begin{itemize}
+\tightlist
+\item
+  Participation (30\%): helping yourself and helping others
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Includes attendance. Starting week 2, will take attendance via
+    \url{https://www.youhere.org/}
+
+    \begin{itemize}
+    \tightlist
+    \item
+      Let me know if you cannot or do not want to use that.
+    \end{itemize}
+  \end{itemize}
+\item
+  Assignments (77-78\%): weekly assignments in the form of R Markdown
+  notebooks, and assessing those of your peers
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Grading is N\% in week N (\(N = 1, ..., 12\))
+  \end{itemize}
+\item
+  No exam
+\end{itemize}
+
+\pause{}
+
+Total: 107-108\%
+
+\end{frame}
+
+\begin{frame}{Useful Resources}
+\protect\hypertarget{useful-resources}{}
+
+When you get stuck, the following fantastic books may help:
+
+\begin{itemize}
+\tightlist
+\item
+  Kieran Healy's book on \emph{Data Visualization}
+  (\url{http://socviz.co/})
+\item
+  Grolemund and Wickham's book \emph{R for Data Science}
+  (\url{https://r4ds.had.co.nz/})
+\end{itemize}
+
+Additionally:
+
+\begin{itemize}
+\tightlist
+\item
+  Tuesdays 17:30-19:10, N13 309: Coding practice with R
+\item
+  Júlia's sessions
+\item
+  Ask questions on \url{https://discourse.trichotomy.xyz}
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{Where you should be}
+\protect\hypertarget{where-you-should-be}{}
+
+You should:
+
+\begin{itemize}
+\tightlist
+\item
+  Have RStudio set up up and working
+\item
+  Have git set up and working
+\item
+  Have cloned the repository for the course
+\item
+  Have an account on \url{https://discourse.trichotomy.xyz}
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{First time I teach R}
+\protect\hypertarget{first-time-i-teach-r}{}
+
+I tend to experiment quite a bit:
+
+\begin{itemize}
+\tightlist
+\item
+  Early on, still worth figuring out what works
+\item
+  Especially assignments and how to incentivize teamwork
+\item
+  After week 3, should be ironed out
+\end{itemize}
+
+\pause{}
+
+Any questions?
+
+\end{frame}
+
+\end{document}
