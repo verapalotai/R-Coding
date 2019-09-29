@@ -1,0 +1,39 @@
+---
+title: "Lecture 2 - Notes"
+author: "Veronika Palotai"
+date: '2019 09 23 '
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Group Assignment
+
+Track how learning is going in class (goal 1)
+
+* deal with issues others had (go deeper into it), take over some of the learning from the others, goal 2
+* get some data from classmates (like how many languages u know) goal 3
+
+first team presents in 2 weeks!!!
+
+team: me, Gyula, Agnes, Eszter
+
+Peer review: did they do it? did they document if they got stuck? -> review 3 hws
+
+## Important Snippets
+
+
+```{r snippets, eval=FALSE}
+getwd() # gets your default working directory
+setwd("~/Git/blabla/lecture2")
+read_csv("my_file.csv")
+read.csv2() # for European data which is mostly semi-colon delimited
+sample() # samples columns randomly but not for all data structures
+sample_n(student_first_names, 4) #if u have one column ??
+```
+
+

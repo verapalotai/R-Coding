@@ -1,8 +1,10 @@
 ---
-title: "Lecture 2: Chapter 3 by Kieran Healy"
-author: "Marc Kaufmann"
+title: 'Lecture 2: Chapter 3 by Kieran Healy'
+author: "Veronika Palotai"
 date: "September 23, 2019"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -42,15 +44,24 @@ How to use ggplot:
   
 ```{r, geoms, eval=FALSE}
 library(ggplot2)
-... + geom_point() # Produces scatterplots
-... + geom_bar() # Bar plots
-.... + geom_boxplot() # boxplots
-... # 
+library(gapminder)
+p <- ggplot(data = gapminder, mapping = aes(x = gdpPercap, y = lifeExp))
+p + geom_point() # Produces scatterplots
+p + geom_bar() # Bar plots
+p + geom_boxplot() # boxplots
 ```
 
 You link these steps by *literally* adding them together with `+` as we'll see.
 
 **Exercise:** What other types of plots are there? Try to find several more `geom_` functions.
+
+**Answer:** 
+
+- *geom_histogram()*: visualizes the distribution of a single continuous variable by dividing the *x* axis into bins and counting the nr. of observations in each bin
+
+- *geom_qq()*: so-called quantile-quantile plot, this is used to determine if your data is close to being normally distributed
+
+- *geom_line()*: a plot type used for time series and trend lines
 
 ## Mappings Link Data to Things You See
 
@@ -74,12 +85,15 @@ In detail:
   
 Importantly, mappings don't say *what* color or shape some variable will have -- rather, it says that a given dataset will be mapped *to* the color or *to* the shape.
 
-```{r, what_is_in_p}
+```{r, what_is_in_p, results='hide'}
 str(p)
 str(p + geom_point())
 ```
 
-**Exercise:** Make sure that your knitted version doesn't include all the output from the `str(...)` commands, it's too tedious.
+**Exercise:** Make sure that your knitted version doesn't include all the output from the `str(...)` commands, it's too tedious. 
+
+**Answer:** In order to make this sure, it is enough to set the evaluation to false at the beginning of the code chunk if we don't want to run the code at all. If we want to run the code but don't want to see the results then results='hide' should be added at the beginning of the chunk.
+
 
 Finally, we add a *layer*. This says how some data gets turned into concrete visual aspects.
 
@@ -108,25 +122,31 @@ p + geom_point() + geom_smooth(method = "lm") + scale_x_log10()
 
 **Exercise:** Describe what the `scale_x_log10()` does. Why is it a more evenly distributed cloud of points now? (2-3 sentences.)
 
+**Answer:** Transforms the x axis into a log scale with base 10. It is important to note that the this scale function transforms the data. In our case there are values which are much larger than the bulk of the data. These values are much further from the other data points on a standard linear scale. Unlike a linear scale, a logarithmic one is based on orders of magnitude therefore in this case using a logarithmic scale results in a more evenly distributed cloud of points. 
+
 Nice! The x-axis now has scientific notation, let's change that.
 
-```{r, scales, eval=FALSE}
+```{r, scales}
 library(scales)
 p + geom_point() + 
   geom_smooth(method = "lm") + 
   scale_x_log10(labels = scales::dollar)
 p + geom_point() + 
   geom_smooth(method = "lm") + 
-  scale_x_log10(labels = scales::...)
+  scale_x_log10(labels = scales::dollar)
 ```
 
 **Exercise:** What does the `dollar()` call do?
 
-```{r, dollar_answer}
+**Answer:** According to the description: *The returned function will format a vector of values as currency. If accuracy is not specified, values are rounded to the nearest cent, and cents are displayed if any of the values has a non-zero cents and the largest value is less than largest_with_cents which by default is 100,000.*
+
+```{r, dollar_answer, results='hide'}
 ?dollar()
 ```
 
 **Exercise:** How can you find other ways of relabeling the scales when using `scale_x_log10()`?
+
+**Answer:** By using the ?scale_x_log10() command and reading the labels section of the help page.
 
 ### The Ggplot Recipe
 
@@ -149,14 +169,18 @@ This is interesting (or annoying): the points are not yellow. How can we tell gg
 
 ```{r, yellow_points, eval=FALSE}
 p <- ggplot(data = gapminder,
-            mapping = aes(x = gdpPercap, y = lifeExp, ...))
-p + geom_point(...) + scale_x_log10()
+            mapping = aes(x = gdpPercap, y = lifeExp))
+p + geom_point(color = "yellow") + scale_x_log10()
 ```
 
 **Exercise:** Based on the discussion in Chapter 3 of *Data Visualization* (read it), describe in your words what is going on. 
 One way to avoid such mistakes is to read arguments inside `aes(<property> = <variable>)`as *the property <property> in the graph is determined by the data in <variable>*. 
 
+**Answer:** An aesthetic is basically the mapping of variables in our data to properties we can see on graphs. Technically, it defines the basic structure of the graphic. Some of the properties we might want to set, like color or size, have the same name as mappable elements. These, however, do not involve mapping variables to aesthetic elements therefore such arguments will never go inside the aes() function.
+
 **Exercise:** Write the above sentence for the original call `aes(x = gdpPercap, y = lifeExp, color = 'yellow')`.
+
+**Answer:** The property *x* in the graph is determined by data in *gdpPercap*, the property *y* in the graph is determined by data in *lifeExp*. For the last one it would be: the property *color* in the graph is determined by the data in *yellow*, however, this is usually meaningless unless there is actual data in yellow.
 
 Aesthetics convey information about a variable in the dataset, whereas setting the color of all points to yellow conveys no information about the dataset - it changes the appearance of the plot in a way that is independent of the underlying data. 
 
@@ -169,6 +193,40 @@ p + geom_point() + geom_smooth(color = "orange", se = FALSE, size = 8, method = 
 ```
 
 **Exercise:** Write down what all those arguments in `geom_smooth(...)` do.
+
+**Answer:** 
+
+- mapping: Set of aesthetic mappings created by aes() or aes_(). If specified and inherit.aes = TRUE (the default), it is combined with the default mapping at the top level of the plot. You must supply mapping if there is no plot mapping.
+
+- data: The data to be displayed in this layer. There are three options: NULL, data.frame or other object, function.
+
+- position: Position adjustment, either as a string, or the result of a call to a position adjustment function.
+
+- ...: Other arguments passed on to layer(). These are often aesthetics, used to set an aesthetic to a fixed value, like colour = "red" or size = 3. They may also be parameters to the paired geom/stat.
+
+- method: Smoothing method (function) to use, accepts either a character vector, e.g. "auto", "lm", "glm", "gam", "loess" or a function, e.g. MASS::rlm or mgcv::gam, stats::lm, or stats::loess.
+
+- formula: Formula to use in smoothing function, eg. y ~ x, y ~ poly(x, 2), y ~ log(x)
+
+- se: Display confidence interval around smooth? (TRUE by default, see level to control.)
+
+- na.rm: If FALSE, the default, missing values are removed with a warning. If TRUE, missing values are silently removed.
+
+- show.legend: logical. Should this layer be included in the legends? NA, the default, includes if any aesthetics are mapped. FALSE never includes, and TRUE always includes. It can also be a named logical vector to finely select the aesthetics to display.
+
+- inherit.aes: If FALSE, overrides the default aesthetics, rather than combining with them. This is most useful for helper functions that define both data and aesthetics and shouldn't inherit behaviour from the default plot specification, e.g. borders().
+
+- geom, stat: Use to override the default connection between geom_smooth() and stat_smooth().
+
+- n: Number of points at which to evaluate smoother.
+
+- span: Controls the amount of smoothing for the default loess smoother. Smaller numbers produce wigglier lines, larger numbers produce smoother lines.
+
+- fullrange: Should the fit span the full range of the plot, or just the data?
+
+- level: Level of confidence interval to use (0.95 by default).
+
+- method.args: List of additional arguments passed on to the modelling function defined by method.
 
 ```{r, gapminder_with_labels}
 p + geom_point(alpha = 0.3) + 
@@ -193,6 +251,8 @@ p + geom_point() + scale_x_log10(labels = dollar) + geom_smooth()
 
 **Exercise:** What does `fill = continent` do? What do you think about the match of colors between lines and error bands?
 
+**Answer:** The property color=continent displays the data points corresponding to countries from the same continent with the same colour. Multiple lines are created to fit to the data by continent and the property *fill* also sets the color of the confidence interval for each line based on continents so these also match the colours used for each continent.
+
 ```{r, gapminder_color_by_continent_single_line}
 p <- ggplot(data = gapminder,
             mapping = aes(x = gdpPercap, y = lifeExp))
@@ -201,7 +261,11 @@ p + geom_point(mapping = aes(color = continent)) + geom_smooth() + scale_x_log10
 
 **Exercise:** Notice how the above code leads to a single smooth line, not one per continent. Why?
 
+**Answer:** Because we specified *color=continent* in geom_point() not in ggplot().
+
 **Exercise:** What is bad about the following example, assuming the graph is the one we want? This is why you should set aesthetics at the top level rather than at the individual geometry level if that's your intent.
+
+**Answer:** mapping = aes(color = continent) is used in both geom_smooth() functions therefore smoothing is done twice based on continents. In the first geom_smooth() where the fill property is also specified, the confidence intervals are also colourful. In case of the second geom_smooth() fill is not specified so the error bands belonging to these lines are grey. To correct the plot, both color and fill should be specified in the aes() in ggplot().
 
 ```{r, many_continents}
 p <- ggplot(data = gapminder,
@@ -216,17 +280,169 @@ p + geom_point(mapping = aes(color = continent)) +
 
 **Exercise (Discourse):** Find ways to save the figures that you made so that you can use them elsewhere too. Create a new folder to save only images. Use the command for saving to save the picture for the last image in your new folder, after you have updated the axes, title, subtitle, and caption of the image. Post your solution on Discourse and use it to include the final image above with a caption saying "Saved by <your-name>" inside your Discourse post.
 
+```{r, saving_plot, warning=FALSE}
+getwd()
+dir.create("./images")
+
+p <- ggplot(data = gapminder,
+            mapping = aes(x = gdpPercap, y = lifeExp))
+p + geom_point(mapping = aes(color = continent)) + 
+  geom_smooth(color = 'yellow') + scale_x_log10(labels = scales::dollar) + 
+  labs(x = "GDP Per Capita", 
+       y = "Life Expectancy", 
+       title = "Economic Growth and Life Expectancy", 
+       subtitle = "Data Points are country-years", 
+       caption = "Saved by Veronika Palotai")
+
+ggsave("./images/econ_growth-life_exp.png",plot = last_plot())
+
+```
+
 **Exercise:** Read section 3.8 "Where to go next" from DV. Based on those ideas, experiment and create two different graphs with the gapminder data. Describe each briefly in one sentence.
+
+**Answer:**
+
+Plotting Life Expectancy against Population rather than GDP per capita:
+
+```{r, experiment_1}
+p <- ggplot(data = gapminder,
+            mapping = aes(x = pop, y = lifeExp, color = continent, fill = continent))
+p + geom_point() + 
+  geom_smooth() + scale_x_log10() + 
+  labs(x = "Population", 
+       y = "Life Expectancy", 
+       title = "Economic Growth and Population", 
+       subtitle = "Data Points are country-years", 
+       caption = "Source: Gapminder")
+```
+
+Mapping color to year instead of continent:
+
+```{r, experiment_2}
+p <- ggplot(data = gapminder,
+            mapping = aes(x = gdpPercap, y = lifeExp, color = year))
+p + geom_point() + geom_smooth() + scale_x_log10(labels = scales::dollar) + 
+  labs(x = "GDP Per Capita", 
+       y = "Life Expectancy", 
+       title = "Economic Growth and GDP Per Capita", 
+       subtitle = "Data Points are country-years", 
+       caption = "Source: Gapminder")
+```
 
 **Exercise:** Read section 1.6 of [R for Data Science](https://r4ds.had.co.nz/introduction.html) on *Getting help and learning more*. Go back to an error from your previous assignment -- or pick a new one -- and post a reproducible error as described in that section on the discourse forum.
 
+**Answer:**
+```{r, error_repr, eval=FALSE}
+#packages
+None
+
+#data
+None
+
+#code
+help(class())
+
+#error
+Error in help(class()) : ‘topic’ should be a name, length-one character vector or reserved word
+
+Reason: I should have put the name of class() function, ‘class’ as an argument of help(), not the actual function without any arguments.
+```
+
 **Exercise:** Do exercise 3.2.4 from [R for Data Science](https://r4ds.had.co.nz/data-visualisation.html#first-steps). Include your code in chunks, describe the output and code (where necessary) in the surrounding text.
+
+**Answer:**
+
+### Run ggplot(data = mpg). What do you see?
+
+An empty graph.
+
+### How many rows are in mpg? How many columns?
+
+```{r, structure, eval=FALSE}
+str(mpg)
+```
+
+It has 234 rows and 11 columns.
+
+### What does the drv variable describe? Read the help for ?mpg to find out.
+
+Help says: f = front-wheel drive, r = rear wheel drive, 4 = 4wd. So it determines the type of wheel drive.
+
+### Make a scatterplot of hwy vs cyl.
+
+```{r, hwy_vs_cyl}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = hwy, y = cyl))
+```
+
+### What happens if you make a scatterplot of class vs drv? Why is the plot not useful?
+
+```{r, class_vs_drv}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = class, y = drv))
+```
+
+A scatterplot is not the appropriate way of visualizing this type of data. This way it is difficult to read.
 
 **Exercise:** Go through Exercises in 3.3.1. If an exercise does not make sense immediately (such as you don't know what a categorical variable is), replace the question by a question that addresses that point (in the case of the caregorical variable "What are categorical and continuous variables and how are they different in R?"). Write it down, try to answer that question, and ignore the original question. That way you don't end up spending too much time on this one exercise.
 
+**Answer:**
+
+### What’s gone wrong with this code? Why are the points not blue?
+
+Becaue `color = 'blue'` and `aes(color = 'blue')` are very different, the second makes usually no sense, as `'blue'` is treated as *data*.
+
+### Which variables in mpg are categorical? Which variables are continuous? (Hint: type ?mpg to read the documentation for the dataset). How can you see this information when you run mpg?
+
+- Categorical: model, trans, drv, fl, class
+
+- Continuous: displ, cty, hwy, year, cyl
+
+### Map a continuous variable to color, size, and shape. How do these aesthetics behave differently for categorical vs. continuous variables?
+
+A continuous variable can't be mapped to *shape*, *size* maps the variable to the area of a circle-shaped mark and *color* maps a continuous variable to the saturation of the colour blue.
+
+### What happens if you map the same variable to multiple aesthetics?
+
+It is possible to map the same variable to multiple aesthetics. For instance, using both *size* and *color* for the same variable means that values are distinguished based on both size and colour.
+
+```{r, same_var}
+ggplot(data = mpg) + geom_point(mapping = aes(x = class, y = drv, size = hwy)) +
+  geom_point(mapping = aes(x = class, y = drv, color = hwy))
+```
+
+### What does the `stroke` aesthetic do? What shapes does it work with?
+
+Stroke controls the width of the border in case of those shapes that only have one.
+
+```{r, stroke_test}
+ggplot(data = mpg) + geom_point(mapping = aes(x = class, y = drv, stroke = displ), shape = 3)
+```
+
+### What happens if you set an aesthetic to something other than a variable name, like `displ < 5`?
+
+The expression will be evaluated and the result will be plotted. In this case where displ < 5 is TRUE, the corresponding data points are coloured blue where it's FALSE they are coloured red.
+
+```{r, var_disp}
+ggplot(data = mpg) + geom_point(mapping = aes(x = cyl, y = hwy, color = displ < 5))
+```
+
 **Exercise:** Read the (very short) [Chapter 4 of R for Data Science](https://r4ds.had.co.nz/workflow-basics.html) and try exercise 1 in section 4.4.
 
+**Answer:** 
+
+Why does this code not work?
+
+```{r, code_not_working, eval=FALSE}
+my_variable <- 10
+my_varıable
+```
+
+It's not working because the letter *i* in the second declaration of the variable is not the latin *i* used in the first one but some special character without the dot. As the two declarations are not the same, the first one has 10 as its value but the second one returns `not found` since it has never been used before.
+
 **Bonus Exercise:** Why did I load the `scales` library twice via `library(scales)` to knit? 
+
+**Answer:** I could not figure this one out. Most of my googling results explain how to customize `scale` but no results on knitting.
 
 ## Assignment 3
 

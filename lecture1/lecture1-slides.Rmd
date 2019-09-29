@@ -5,12 +5,12 @@ author: |
   | Central European University
 date: "9/10/2019"
 output:
-  slidy_presentation: default
-  ioslides_presentation: default
   beamer_presentation:
     latex_engine: xelatex
     slide_level: 2
     theme: metropolis
+  ioslides_presentation: default
+  slidy_presentation: default
 ---
 
 ```{r setup, include=FALSE}
