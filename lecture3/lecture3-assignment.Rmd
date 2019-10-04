@@ -1,0 +1,364 @@
+---
+title: "Assignment 4"
+author: "Veronika Palotai"
+date: '2019 10 04 '
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Lecture 3 Script
+
+First choose a new team for next week
+
+## Follows Grolemund and Wickham, chapter 5
+
+- Install the dataset if you don't have it
+- install.packages("nycflights13")
+
+```{r, install, results='hide'}
+#install.packages("nycflights13")
+library(nycflights13)
+library(tidyverse)
+```
+
+## Today, we'll cover
+
+- filter()
+- arrange()
+- select()
+
+## Next week, we'll cover
+
+- mutate()
+- summarise()
+- group_by(), which tells the other verbs to use the data by groups
+
+All take as first argument a data frame (or tibble) and return a data frame (or tibble). Together they form the verbs of the tidyverse.
+
+### Class Exercise 
+
+For 2 minutes, think about why it is a nice property (and a conscious design choice) that all verbs take as a first argument a data frame and return a data frame. Talk with your neighbour about this.
+
+### Answer 
+
+We don't change the underlying dataset ths way, you can chain multiple functions together because the data type doesn't change -> it becomes a pipe
+
+- Filtering (choosing) rows with filter() dplyr functions don't change the data frame that you give it. They return a new one.
+- Save the filtered data
+- Assign and print, use (varname <- ...)
+- Check it really assigned
+
+## Some notes on comparisons
+
+In short, you can't rely on "It works because it works for what I tried". For floating point comparisons, use near() to compare numbers#
+
+### Exercise: What counts as near? Find out. Can you change it?
+
+Using near is safer than using '==' because it has a built in tolerance ('tol') which can be modified:
+
+```{r, tolerance, eval=FALSE}
+near(x, y, tol = .Machine$double.eps^0.5)
+```
+
+## Multiple constraints
+
+### Class exercise: How do we know these actually worked?
+
+### Class Exercise: What does this do?
+
+```{r, exercise1, eval=FALSE}
+(mystery_filter <- filter(flights, !(arr_delay > 120 | dep_delay > 120)))
+```
+
+Vote:
+
+1. All flights that started and landed 120 minutes late
+
+2. All flights that started 120 minutes late or landed 120 minutes late
+
+3. All flights that started less than 120 minutes late or landed less than 120 minutes late
+
+4. All flights that started and landed less than 120 minutes late
+
+Correct answer: 4.
+
+### Class Exercise: Get the filter command for number 3. above
+
+### Answer
+
+```{r, answer2, eval=FALSE}
+(practice_filter <- filter(flights, (dep_delay < 120) | (arr_delay < 120)))
+```
+
+
+### Class Exercise: get all flights that departed with less than 120 minutes delay, but arrived with more than 120 minutes delay.
+
+```{r, exercise2, eval=FALSE}
+dep_ok_arr_not <- filter(flights, dep_delay <= 120, arr_delay > 120)
+```
+
+Let's look at the data to see what the departure was for planes that arrived late but didn't start quite as late
+
+## Filter flights by those that had dep_delay <= 120, then plot histogram
+
+```{r, exercise3}
+dep_delay_ok <- filter(flights, dep_delay <= 120)
+
+ggplot(data = dep_delay_ok, 
+       mapping = aes(x = dep_delay)) + 
+  geom_histogram() + 
+  labs(x = "Departure Delay", 
+       y = "Number of Flights", 
+       title = "Dep. Delay Distr. of Flights That Took Off Less Than 120 Minutes Late")
+```
+
+### NA: Not available
+
+```{r, na, eval=FALSE}
+NA > 5
+10 == NA
+NA == NA
+FALSE & NA # false and sth is false
+TRUE & NA # output depends on what NA is
+```
+
+## Nice example from G&W
+
+Let x be Mary's age. We don't know how old she is. Let y be John's age. We don't know how old he is.
+
+```{r, ages, eval=FALSE}
+x <- NA
+y <- NA
+```
+
+Are John and Mary the same age?
+
+```{r, same, eval=FALSE}
+x == y
+```
+
+We don't know!
+
+
+## arrange()
+
+Some examples:
+
+```{r, examples, eval=FALSE}
+arrange(flights, year, month, day)
+arrange(flights, dep_delay)
+arrange(flights, desc(dep_delay))
+```
+
+### Class exercise: How can we get the missing values at the top?
+
+Fastest flight
+
+```{r, fastest_flight, eval=FALSE}
+arrange(flights, air_time)
+```
+
+Better ways of getting some special columns
+
+## select()
+
+```{r, select, eval=FALSE}
+select(flights, year, month, day)
+select(flights, air_time)
+select(arrange(flights, air_time), air_time, origin, dest)
+```
+
+That's tedious to write. Hence the pipe.
+
+```{r, pipe, eval=FALSE}
+flights %>%
+  arrange(air_time) %>%
+  select(air_time, origin, dest)
+```
+
+Notice that the data doesn't have to be mentioned and the first argument should not have to be provided
+
+### Some helper functions
+
+```{r, helpers, eval=FALSE}
+select(flights, year:day)
+flights %>% select(year:day) # same as above
+
+colnames(flights)
+```
+
+#### Dropping Columns
+
+```{r, drop, eval=FALSE}
+select(flights, -(year:day))
+```
+
+#### start_with, end_with, contains
+
+```{r, start_end, eval=FALSE}
+select(flights, starts_with("arr"))
+select(flights, -starts_with("arr"))
+select(flights, ends_with("hour"))
+select(flights, -contains("time"))
+```
+
+
+#### For More Use Help
+
+```{r, help, eval=FALSE}
+?select
+```
+
+#### Renaming Columns
+
+```{r, rename, eval=FALSE}
+rename(flights, destination = dest)
+```
+
+
+#### If it's difficult to see
+
+```{r, see_better, eval=FALSE}
+flights %>% rename(destination = dest) %>% select(year:day, destination)
+```
+
+
+#### Moving Columns to The Start
+
+```{r, eval=FALSE}
+select(flights, origin, dest, everything()) 
+# takes origin and dest to the beginning, before everything
+```
+
+
+### Class Exercise: What happens if you include a variable multiple times?
+
+## Assignment 4
+
+### Resources
+ 
+If you have no experience coding, this may be helpful: https://rstudio-education.github.io/hopr/
+ 
+## Assignment 4
+ 
+1. Read Chapter 5 of Grolemund and Wickham parts 1 through 3 (until select) of Grolemund and Wickham for anything we did not cover. We will cover the remaining parts next week.
+
+2. Turn the script (.R file) from class into a markdown file which displays the graphs and tables. Add any comments that might benefit you later on, such as reminders of things you found confusing, etc. Make sure that you comment the graphs where appropriate, either through captions or in the accompanying text.
+
+3. Repeat the steps from chapter 5 in parts 1 through 3, but using hotels data instead of the nycflights data. Since the two datasets don't have the same columns, either pick some variable you'd like to filter on and see results on, or use the following suggested mapping:
+  - When filtering (etc) on month for flights, use stars in the hotels data
+  - Instead of flight duration, use hotel price
+  - For travel times, use distance (you can reuse distance for different types of time)
+ 
+Example: Instead of doing filter(flights, month == 1) you should do filter(hotels, stars == <some-number-you-like>).
+
+Create similar output to Grolemund and Wickham, i.e. show what the output is of various commands.
+
+## Part 3 of Assignment 4
+
+## 5.1 Introduction
+
+### 5.1.1 Prerequisites
+
+#### CLEAR MEMORY
+
+```{r, clear_mem, eval=FALSE}
+rm(list=ls())
+```
+
+
+#### Import Libraries
+
+
+```{r, packages_install, eval=TRUE, results='hide'}
+# install.packages("scales")
+library(ggplot2)
+library(tidyverse)
+library(scales)
+```
+
+
+#### Setting the Path
+
+```{r, path, eval=TRUE, results='hide'}
+dir <-  "D:/Egyetem/CEU/Coding_1/R-Coding/"
+```
+
+
+#### Location Folders
+
+```{r, loc, eval=TRUE, results='hide'}
+data_in <- paste0(dir,"da_data_repo/hotels-vienna/clean/")
+data_out <-  paste0(dir,"da_case_studies/ch03-hotels-vienna-explore/")
+output <- paste0(dir,"da_case_studies/ch03-hotels-vienna-explore/output/")
+func <- paste0(dir, "da_case_studies/ch00-tech-prep/")
+```
+
+### 5.1.2 Hotels Vienna
+
+#### Loading Dataset 
+
+```{r, dataset, eval=TRUE, results='hide'}
+vienna <- read_csv(paste0(data_in,"hotels-vienna.csv"))
+```
+
+#### View Dataset
+
+```{r, view, eval=TRUE, results='hide'}
+View(vienna)
+```
+
+### 5.1.3 dplyr basics
+
+```{r, dplyr, eval=TRUE, results='hide'}
+library(dplyr)
+```
+
+## 5.2 Filter Rows with filter()
+
+```{r, filter_1, eval=TRUE, results='hide'}
+filter(vienna, stars == 4.0)
+four_star_hotels <- filter(vienna, stars == 4.0) # saving result
+(four_star_hotels <- filter(vienna, stars == 4.0)) # printing result
+```
+
+### 5.2.1 Comparisons
+
+```{r, comp_1, eval=FALSE}
+filter(vienna, stars = 4.0)
+#Error: `stars` (`stars = 4`) must not be named, do you need `==`?
+```
+
+We get an informative error that tells us to use '==' instead of '='.
+
+### 5.2.2 Logical Operators
+
+```{r, logical_ops, eval=TRUE}
+filter(vienna, stars == 4.0 | stars == 3.0)
+four_or_three_star_hotels <- filter(vienna, stars %in% c(4.0, 3.0))
+filter(vienna, !(stars > 4.0 | distance > 5.0))
+filter(vienna, stars <= 4.0, distance <= 5.0) # means the same as the one above
+```
+
+## 5.3 Arrange Rows with arrange()
+
+```{r, arrange, eval=TRUE}
+arrange(vienna, stars, distance, price)
+arrange(vienna, desc(stars))
+```
+
+## 5.4 Select Columns with select()
+
+```{r, select_2, eval=TRUE}
+select(vienna, stars, distance, price, accommodation_type)
+select(vienna, stars:distance)
+select(vienna, -(stars:distance))
+rename(vienna, nr_of_nights = nnights)
+select(vienna, stars, price, distance, everything())
+```
+

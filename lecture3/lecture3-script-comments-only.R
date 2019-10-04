@@ -24,6 +24,8 @@
 # that all verbs take as a first argument a data frame and return a data frame. Talk with your
 # neighbour about this.
 
+# Answer: We don't change the underlying dataset ths way, you can chain multiple functions together because the data type doesn't change -> it becomes a pipe
+
 # Filtering (choosing) rows with filter()
 
 # dplyr functions don't change the data frame that you give it. They return a new one.

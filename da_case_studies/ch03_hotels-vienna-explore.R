@@ -23,7 +23,7 @@ library(tidyverse)
 library(scales)
 
 # set the path
-dir <-  Sys.getenv("R_CODING")
+dir <-  "D:/Egyetem/CEU/Coding_1/R-Coding/"
 
 
 #location folders
