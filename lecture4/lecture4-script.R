@@ -1,6 +1,11 @@
 # Lecture 4 Script
 # First choose a new team for next week
 
+library(readr)
+dir <- Sys.getenv("R_CODING")
+student_first_names <- read_csv(paste0(dir, "lecture2/student-names.csv"))
+library(tidyverse)
+sample_n(student_first_names, 4)
 
 # What if we get the same students as before? How should we do this?
 
@@ -12,9 +17,6 @@ library(nycflights13)
 library(tidyverse)
 library(dplyr)
 
-# Let's stare at the columns to see what we can choose from
-
-View(flights)
 
 # Narrow the tibble to see what mutate() is doing
 flights_subset <- select(flights, 
@@ -28,11 +30,14 @@ mutate(flights_subset,
        speed_miles = (distance/air_time) * 60)
 
 # No one knows what speed in miles is, let's fix that
+# minutes_per_hour <- 60
 
 mutate(flights_subset, 
        speed_km = (distance*1.61/air_time)*60)
 
 # Magic numbers. Great, every one loves them. They are evil.
+KM_PER_MILE <- 1.61
+
 
 minutes_per_hour <- 60
 KM_PER_MILE <- 1.61 # usual way of introducing constants
@@ -40,8 +45,12 @@ KM_PER_MILE <- 1.61 # usual way of introducing constants
 mutate(flights_subset,
        speed_km = (distance * KM_PER_MILE/air_time)*60)
 
-
 # Even nicer is to create intermediate results for clarity
+mutate(flights_small,
+       distance_km = distance * KM_PER_MILE,
+       air_time_hours = air_time / 60,
+       speed_km = distance_km / air_time_hours
+       )
 
 mutate(flights_subset,
        distance_km = distance*KM_PER_MILE,
@@ -50,6 +59,12 @@ mutate(flights_subset,
        )
 
 # transmute only keeps new variables
+transmute(flights_small,
+       distance_km = distance * KM_PER_MILE,
+       air_time_hours = air_time / 60,
+       speed_km = distance_km / air_time_hours
+       )
+
 
 transmute(flights_subset,
        distance_km = distance*KM_PER_MILE,
@@ -57,16 +72,9 @@ transmute(flights_subset,
        speed_km = distance_km / air_time_hours 
        )
 
-# You cannot use any transformation inside mutate.
-# It has to be vectorized: it takes a vector and returns a vector of the same length
-# The reason (I believe) is that the operation is done on the column as a whole,
-# For this the operation needs to make sense for a whole column, not just for one number
 
-# SOME VECTORIZED OPERATIONS
+# You cannot use all transformations inside mutate.
 
-# Standard arithmetic functions will work: +, *, etc
-
-# The time in dep_time is given by HHMM (How do I know this?)
 
 transmute(flights,
           dep_time,
@@ -78,6 +86,9 @@ transmute(flights,
 # log(), log2(), log10() work
 
 # How can you test whether something is vectorized? 
+(x <- c(0,1,2,3,4,5,6,7,8,9))
+(y <- 0:9)
+(z <- seq(0,9))
 
 (x <- c(0,1,2,3,4,5,6,7,8,9))
 (y <- 0:9) #same
@@ -88,16 +99,15 @@ transmute(flights,
 
 (lead(y)) # also used for ts data, shifts to the other side
 
+
 # What do lag and lead do?
 
 # Some cumulative and aggregate functions
-
 cumsum(x)
 cumprod(x)
 cumprod(lead(x))
-
 ?cummin
-?cummean
+?cummax
 cummean(x)
 
 # Logical operators work
@@ -132,6 +142,7 @@ mean(x)
 
 # What happens when we try this on a dataframe
 transmute(flights, delay = mean(arr_delay, na.rm = TRUE))
+
 transmute(flights, delay = kk(arr_delay)) # repeat the value over and over again, returns the 3rd row of the column
 
 # Notice that it does not throw an error. 
@@ -162,11 +173,12 @@ summarise(flights, delay = mean(dep_delay, na.rm = TRUE)) # computes the mean of
 mean(flights$dep_delay, na.rm = TRUE)
 
 # <data-frame>$<column-name> will give you that column. Quick way to choose columns.
+mean(select(flights, dep_delay), na.rm = TRUE)
 
 mean(select(flights, dep_delay), na.rm = TRUE)
 
 # An error I made: I tried this:
-# Huh? What's going on here? 
+
 flights$dep_delay # unreadable format
 select(flights, dep_delay) # takes a data frame returns a data frame (one column in this case)
 # I thought select(flights, dep_delay) was the same as flights$dep_delay
@@ -183,6 +195,10 @@ by_day
 # Looks distinctly the same
 
 # But it really isn't!
+summarise(
+  group_by(flights, year, month, day), 
+  delay = mean(dep_delay, na.rm = TRUE)
+  )
 
 summarise(by_day, 
           delay = mean(dep_delay, na.rm = TRUE)
@@ -200,6 +216,9 @@ delay <- summarise(by_destination,
 delay
 
 # OK, we need the distance too, or else there is not much to plot.
+(delay <- summarise(by_destination,
+                   delay = mean(arr_delay, na.rm = TRUE),
+                   distance = mean(distance, na.rm = TRUE)))
 
 (delay <- summarise(by_destination,
                     delay = mean(arr_delay, na.rm = TRUE),
@@ -229,7 +248,7 @@ n() # should only be called in a data context
 # Finally...
 
 
-# Exercise as part of assignment 5: The above does not take into account 
+# Optional exercise as part of assignment 5 (somewhat harder): The above does not take into account 
 # the number of flights per location. A location with 1 flight matters as much
 # for smoothing as a location with 300. 
 # That is rarely what we want when smoothing globally. Read the following code,
@@ -241,12 +260,20 @@ n() # should only be called in a data context
 # So, not too misleading, but still...
 # END OF EXERCISE
 
-# doing this with a pipe, and filtering out destinations with 
+# Doing this with a pipe, and filtering out destinations with 
 # - less than 20 flights
 # - to HNL (Honululu), since it's by far the furthest
 # Note: I am not a big fan of dropping things that 'look too different'.
 # You should do such robustness checks, but you shouldn't start there. 
 
+delays <- flights %>% 
+  group_by(dest) %>%
+  summarise(
+    delay = mean(arr_delay, na.rm = TRUE),
+    count = n(),
+    distance = mean(distance, na.rm = TRUE)
+    ) %>%
+  filter( count > 20, dest != "HNL")
 
 # Exercise: Rewrite the above command without the pipe. Which one do you find 
 # easier to read?
@@ -265,6 +292,11 @@ not_missing <- flights %>%
 
 ## Average delay by airplane (identified by tailnum), plot density
 ## Start with freqpoly, then zoom in on that part of the graph that we are interested
+not_missing %>%
+  group_by(tailnum) %>%
+  summarise(delay = mean(dep_delay)) %>%
+  ggplot(mapping = aes(x = delay)) + 
+  geom_histogram(binwidth = 10)
 
 not_missing %>%
   group_by(tailnum) %>%
@@ -273,6 +305,15 @@ not_missing %>%
   geom_histogram(binwidth = 5)
 
 ## Plot number of flights per airplane against delay
+
+not_missing %>%
+  group_by(tailnum) %>%
+  summarise(
+    count = n(),
+    delay = mean(arr_delay)
+    ) %>%
+  ggplot(mapping = aes(x = delay, y = count)) + 
+  geom_point(alpha = 0.1)
          
 not_missing %>%
   group_by(tailnum) %>%
@@ -285,6 +326,14 @@ not_missing %>%
 
 ## Since I need to filter the same thing, all the time 
 # just store in a variable. Delete other stuff.
+not_missing_planes <- not_missing %>%
+  group_by(tailnum) %>%
+  summarise(
+    count = n(),
+    delay = mean(arr_delay),
+    delay_median = median(arr_delay)
+    )
+  
 
 planes_with_not_missing_values <- not_missing %>%
   group_by(tailnum) %>%
@@ -295,6 +344,10 @@ planes_with_not_missing_values <- not_missing %>%
 
 
 # Get the median delay for each ariplane
+ggplot(data = not_missing_planes) + 
+  geom_histogram(mapping = aes(x = delay_median)) + 
+  geom_histogram(mapping = aes(x = delay), color = 'yellow', alpha = 0.3)
+  
 
 ggplot(data = planes_with_not_missing_values) +
   geom_histogram(mapping = aes(x = delay_median)) +
@@ -309,40 +362,6 @@ planes_with_not_missing_values %>%
 
 # ggplot which gets plussed into geoms
 # Try a few values for how many flights one should have done
-
-  
-# 5.6.4 Summary functions
-
-## These need to turn a vector of things into a single thing
-
-
-# What does quantile do?
-
-# Not that helpful. Let's use it and find out.
-
-# Exercise: Find out what these do
-# first(x)
-# first(c(3, 4, 2))
-# last(x)
-# nth(x, 2)
-
-# Counts are important
-
-# Count the number of flights to each destination
-
-# Count the number of distinct carriers to each location
-
-# Short hand
-
-# You can weight the counting, here by distance
-# This counts how many airmiles a given airplane did from NYC
-
-
-## Number of flights each day before 5am
-
-# How many flights are delayed each day by more than 1 hour?
-
-# Class Exercise: Why do I use the mean above? How does that get the proportion?
 
 # Assignment 5: 
 
