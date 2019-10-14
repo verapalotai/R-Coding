@@ -137,7 +137,7 @@ arrange(flights, desc(dep_delay))
 # fastest flight
 arrange(flights, air_time)
 
-# selec()
+# select()
 
 select(flights, year, month, day)
 select(flights, air_time)

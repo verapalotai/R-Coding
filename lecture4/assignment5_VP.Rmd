@@ -1,0 +1,838 @@
+---
+title: "Assignment 5"
+author: "Veronika Palotai"
+date: '2019 10 12 '
+output:
+  html_document: default
+  pdf_document: default
+fig_width: 4 
+fig_height: 2
+---
+
+
+# Lecture 4 Script
+
+## Let's continue with chapter 5
+
+### mutate()
+
+```{r, library, eval=TRUE, message=FALSE, results='hide'}
+library(nycflights13)
+library(tidyverse)
+library(dplyr)
+```
+
+Let's stare at the columns to see what we can choose from
+
+```{r, view, eval=TRUE, message=FALSE, results='hide'}
+View(flights)
+```
+
+
+#### Narrow the tibble to see what mutate() is doing
+
+```{r, narrow, eval=TRUE, message=FALSE, results='hide'}
+flights_subset <- select(flights, 
+                         year:day,
+                         ends_with('delay'),
+                         distance,
+                         air_time)
+
+mutate(flights_subset,
+       catchup = dep_delay - arr_delay,
+       speed_miles = (distance/air_time) * 60)
+```
+
+No one knows what speed in miles is, let's fix that
+
+```{r, mutate, eval=TRUE, message=FALSE, results='hide'}
+mutate(flights_subset, 
+       speed_km = (distance*1.61/air_time)*60)
+```
+
+Magic numbers. Great, every one loves them. They are evil.
+
+```{r, nrs, eval=TRUE, message=FALSE, results='hide'}
+minutes_per_hour <- 60
+KM_PER_MILE <- 1.61 # usual way of introducing constants
+
+mutate(flights_subset,
+       speed_km = (distance * KM_PER_MILE/air_time)*60)
+
+```
+
+Even nicer is to create intermediate results for clarity
+
+```{r, mut2, eval=TRUE, message=FALSE, results='hide'}
+mutate(flights_subset,
+       distance_km = distance*KM_PER_MILE,
+       air_time_hours = air_time/60,
+       speed_km = distance_km / air_time_hours
+       )
+```
+
+#### Transmute only keeps new variables
+
+```{r, transmute, eval=TRUE, message=FALSE, results='hide'}
+transmute(flights_subset,
+       distance_km = distance*KM_PER_MILE,
+       air_time_hours = air_time/60, 
+       speed_km = distance_km / air_time_hours 
+       )
+```
+
+You cannot use any transformation inside mutate. It has to be vectorized: it takes a vector and returns a vector of the same length The reason (I believe) is that the operation is done on the column as a whole. For this the operation needs to make sense for a whole column, not just for one number.
+
+#### SOME VECTORIZED OPERATIONS
+
+Standard arithmetic functions will work: +, *, etc
+
+#### The time in dep_time is given by HHMM (How do I know this?)
+
+```{r, hhmm, eval=TRUE, message=FALSE, results='hide'}
+transmute(flights,
+          dep_time,
+          dep_hour = dep_time %/% 100, # divide integer-wise
+          dep_minutes = dep_time %% 100 # modulo
+          )
+```
+
+log(), log2(), log10() work
+
+#### How can you test whether something is vectorized? 
+
+```{r, vect, eval=TRUE, message=FALSE, results='hide'}
+(x <- c(0,1,2,3,4,5,6,7,8,9))
+(y <- 0:9) #same
+(z <- seq(0,9)) #same
+
+(lag(y))
+(lag(lag(y))) # usually used for time series data, shifts elements
+
+(lead(y)) # also used for ts data, shifts to the other side
+```
+
+#### What do lag and lead do?
+
+lead() and lag() allow us to refer to leading or lagging values. This allows us to compute running differences (e.g. x - lag(x)) or find when values change (x != lag(x)). They are most useful in conjunction with group_by().
+
+
+#### Some cumulative and aggregate functions
+
+```{r, cumsum, eval=TRUE, message=FALSE, results='hide'}
+cumsum(x)
+cumprod(x)
+cumprod(lead(x))
+
+?cummin
+?cummean
+cummean(x)
+```
+
+#### Logical operators work
+
+```{r, log, eval=TRUE, message=FALSE, results='hide', warning=FALSE}
+x>3
+x>y
+x==y
+(x)
+x == c(2,4) 
+x > c(2,4,6)
+
+# for vectorized operations with vectors that are not the 
+# same length, R repeats the shorter vector 
+```
+
+#### What does the answer to this even mean?
+
+```{r, comp, eval=TRUE, message=FALSE, results='hide', warning=FALSE}
+x > c(2,4,6)
+```
+
+They cannot be compared because the longer is not a multiple of the shorter.
+
+### Ranking functions
+
+```{r, rank, eval=TRUE, message=FALSE, results='hide'}
+y <- c(10,5,6,3,7)
+
+min_rank(y) #10 gets rank 5, 5 gets rank 2, and so on...
+?sort
+??sort # things that look like sort but are not specifically sort
+```
+
+Can you figure out from playing around with min_rank() how it works exactly?
+
+It does the most usual type of ranking (e.g. 1st, 2nd, 2nd, 4th). The default gives smallest values the small ranks; use desc(x) to give the largest values the smallest ranks.
+
+So, what is not a vectorized operation? non vectorized = does not return a vector, just a number.
+
+```{r, vect3, eval=TRUE, message=FALSE, results='hide'}
+kk <- function(x) {x[3]} # kk is now a func that returns the third element of a vector
+kk(c(0,1,2,3,4))
+
+mean(x)
+```
+
+What happens when we try this on a dataframe?
+
+```{r, transdatarf, eval=TRUE, message=FALSE, results='hide'}
+transmute(flights, delay = mean(arr_delay, na.rm = TRUE))
+transmute(flights, delay = kk(arr_delay)) 
+# repeat the value over and over again, returns the 3rd row of the column
+```
+
+Notice that it does not throw an error. It does something that makes sense, if it is what you want.
+
+### EXERCISES
+
+- Exercise: Try out a few of the other commands in the chapter.
+
+```{r, ranks, eval=TRUE, message=FALSE, warning=FALSE}
+x <- c(1:10)
+cumsum(x)
+cummean(x)
+cummin(x)
+cummax(x)
+cumprod(x)
+
+y <- c(1,2,2,NA,3,4)
+min_rank(y)
+row_number(y)
+dense_rank(y)
+percent_rank(y)
+cume_dist(y)
+ntile(y,2)
+```
+
+- Exercise: Create several ranges with the n:m notation, i.e. 2:4, 4:8, etc. Try to find out whether you can also take negative ranges and descending.
+
+```{r, rank2, eval=TRUE, message=FALSE, warning=FALSE}
+x <- c(1:9)
+y <- c(-1:5)
+z <- c(-5:-2)
+```
+
+- Exercise: Read ? ":" (the same as help(":"))
+
+The binary operator : has two meanings: for factors a:b is equivalent to interaction(a, b) (but the levels are ordered and labelled differently).
+
+For other arguments from:to is equivalent to seq(from, to), and generates a sequence from from to to in steps of 1 or -1. Value to will be included if it differs from from by an integer up to a numeric fuzz of about 1e-7
+
+- Exercise: Use slice() to choose the first 10 rows of flights. 
+
+```{r, slice, eval=TRUE, message=FALSE, warning=FALSE}
+first_10_rows <- slice(flights, 10, .preserve = TRUE)
+```
+
+- Do the following exercises from 5.5.2:
+
+Exercise 1
+```{r, ex1, eval=TRUE, message=FALSE, warning=FALSE}
+mutate(flights,
+       hour = dep_time %/% 100,
+       minute = dep_time %% 100,
+       mins_since_midnight = hour*60 + minute
+)
+```
+
+Exercise 2
+  
+What I expect is that 'air_time' is the difference between the 'arr_time' and 'dep_time'. In other words, air_time = arr_time - dep_time.
+
+Since 'air_time' is given in minutes but 'arr_time' and 'dep_time' are not, they need to be converted into minutes.
+
+```{r, ex2, eval=TRUE, message=FALSE, warning=FALSE}
+transmute(flights,
+          dep_time_in_mins = (dep_time %/% 100 * 60 + dep_time %% 100) %% 1440,
+          arr_time_in_mins = (arr_time %/% 100 * 60 + arr_time %% 100) %% 1440,
+          air_time,
+          air_time_diff = arr_time_in_mins - dep_time_in_mins)
+```
+Contrary to expectations, they are not equal. One possible reason for this is that 'air_time' does not include time spent on the runway taxiing to and from gates whereas it is included in 'arr_time' and 'dep_time' so the relationship between these values might actually be 'air_time' <= 'arr_time' - 'dep_time'. However, in some cases this is not true which might be the result of 'arr_time' and 'dep_time' not being given in the same time zone.
+
+Exercise 4
+  
+```{r, ex4, eval=TRUE, message=FALSE, warning=FALSE}
+flights %>%
+  mutate(dep_delay_min_rank = min_rank(desc(dep_delay))) %>%
+  filter(dep_delay_min_rank <= 10) %>%
+  arrange(dep_delay_min_rank)
+```
+
+Hint: When you get stuck, try the following two strategies:
+
+1. Take a single row, and work it out by hand
+
+2. Create a variable my_flights which contains only a few rows (4 to 10).
+   Work out a solution for my_flights, where you can check every step.
+
+
+### summarise()
+
+```{r, sum, eval=TRUE, message=FALSE, results='hide'}
+summarise(flights, delay = mean(dep_delay, na.rm = TRUE)) 
+# computes the mean of dep_delay and puts it into a new column
+```
+
+How... useful. Might as well do
+
+```{r, mean, eval=TRUE, message=FALSE, results='hide'}
+mean(flights$dep_delay, na.rm = TRUE)
+```
+
+<data-frame>$<column-name> will give you that column. Quick way to choose columns.
+
+```{r, meanselect, eval=TRUE, message=FALSE, results='hide'}
+mean(select(flights, dep_delay), na.rm = TRUE)
+```
+
+An error I made: I tried this: Huh? What's going on here? 
+
+```{r, err, eval=TRUE, message=FALSE, results='hide'}
+flights$dep_delay # unreadable format
+select(flights, dep_delay) 
+# takes a data frame returns a data frame (one column in this case)
+```
+
+I thought select(flights, dep_delay) was the same as flights$dep_delay. Aha, we should have guessed, since select returns a *data frame*, but we want a column. A data frame of 1 column is not the same as a single column. Still, summarise is way more interesting with its friend, group_by.
+
+```{r, byday, eval=TRUE, message=FALSE, results='hide'}
+by_day <- group_by(flights, year, month, day)
+by_day
+```
+
+Looks distinctly the same. But it really isn't!
+
+```{r, sum2, eval=TRUE, message=FALSE, results='hide'}
+summarise(by_day, 
+          delay = mean(dep_delay, na.rm = TRUE)
+          ) # for each group it will perform the second argument
+```
+
+### 5.6.1
+
+Let's explore link between distance and average delay for every location. What that means is that we want to know the average delay for every destination. Then, once we have that, we want to see how the distance to this location is related to the delay to this location.
+
+```{r, delay, eval=TRUE, message=FALSE, results='hide', warning=FALSE}
+by_destination <- group_by(flights, dest)
+delay <- summarise(by_destination,
+                   delay = mean(arr_delay, na.rm = TRUE))
+delay
+```
+
+OK, we need the distance too, or else there is not much to plot.
+
+```{r, plot, eval=TRUE, message=FALSE, results='hide', warning=FALSE}
+(delay <- summarise(by_destination,
+                    delay = mean(arr_delay, na.rm = TRUE),
+                    distance = mean(distance, na.rm = TRUE)))
+
+p <- ggplot(data = delay,
+            mapping = aes(x = distance, y = delay))
+
+p + geom_point() + geom_smooth() + 
+  labs(x = "Distance to Location",
+       y = "Average Delay",
+       title = "Relation of Delay and Distance to a Location")
+
+
+(delay <- summarise(by_destination,
+                    count = n(), 
+                    delay = mean(arr_delay, na.rm = TRUE),
+                    distance = mean(distance, na.rm = TRUE)))
+
+# n counts the nr of observations/items in sth 
+# (in this case it will count the nr of observations per group)
+
+p <- ggplot(data = delay,
+            mapping = aes(x = distance, y = delay))
+
+p + geom_point(mapping = aes(size = count), alpha = 0.2) + geom_smooth() +
+  labs(x = "Distance to Location",
+       y = "Average Delay",
+       title = "Relation of Delay and Distance to a Location")
+
+
+# smoothing line is misleading in this case
+
+```
+
+n() is a very special function, n() # should only be called in a data context
+
+Finally...
+
+*Exercise* as part of assignment 5: The above does not take into account the number of flights per location. A location with 1 flight matters as much for smoothing as a location with 300. That is rarely what we want when smoothing globally. Read the following code, to see if you understand how it works. Explain in your words in the .Rmd file.
+
+*Answer:* 'n()' counts the number of observations/items in something in this case it will count the number of observations per group (flights per location). This is why the circles representing each location differ in size.
+
+Let's plot the original data, without first taking means by group 
+
+```{r, origplot, eval=TRUE, message=FALSE, warning=FALSE}
+
+p <- ggplot(data = flights,
+            mapping = aes(x = distance, y = arr_delay))
+
+p + geom_point() + geom_smooth() +
+  labs(x = "Distance to Location",
+       y = "Delay",
+       title = "Relation of Delay and Distance to a Location")
+
+```
+
+
+Woah, that looks different! (And ugly.) So, not too misleading, but still... 
+
+
+END OF EXERCISE
+
+doing this with a pipe, and filtering out destinations with 
+
+- less than 20 flights
+
+```{r, less, eval=TRUE, message=FALSE, warning=FALSE}
+
+by_destination <- group_by(flights, dest)
+
+by_destination %>%
+  summarise(count = n()) %>%
+  filter(count>20)
+```
+
+- to HNL (Honululu), since it's by far the furthest
+
+```{r, hnl, eval=TRUE, message=FALSE, warning=FALSE}
+
+by_destination <- group_by(flights, dest)
+
+by_destination %>%
+  filter(dest!='HNL')
+```
+
+Note: I am not a big fan of dropping things that 'look too different'. You should do such robustness checks, but you shouldn't start there. 
+
+
+*Exercise:* Rewrite the above command without the pipe. Which one do you find easier to read?
+
+*Answer:* In my opinion, the one with piping is easier to read.
+
+```{r, hnlnopipe, eval=TRUE, message=FALSE, warning=FALSE}
+
+by_destination <- group_by(flights, dest)
+
+filter(by_destination, dest!='HNL')
+```
+
+### 5.6.2 Missing values
+
+```{r, missing, eval=TRUE, message=FALSE, warning=FALSE}
+
+not_missing <- flights %>%
+  filter(!is.na(dep_delay), !is.na(arr_delay)) 
+
+has_dep_delay_only <- flights %>%
+  filter(is.na(arr_delay))
+
+has_arr_delay_only <- flights %>%
+  filter(is.na(dep_delay))
+
+```
+
+*Exercise:* Does the above command also drop observations that miss only the arr_delay but have a dep_delay? Are there any observations in the dataset for which only dep_delay or arr_delay is missing, but not both?
+
+*Answer:* Comma means AND so it drops those for which one condition is not met (or both). Apparently, there are observtions for which only 'dep_delay' or 'arr_delay' is missing.
+
+### 5.6.3 Counts
+
+Average delay by airplane (identified by tailnum), plot density. Start with freqpoly, then zoom in on that part of the graph that we are interested.
+
+```{r, miss, eval=TRUE, message=FALSE, results='hide'}
+not_missing %>%
+  group_by(tailnum) %>%
+  summarise(delay = mean(dep_delay)) %>%
+  ggplot(mapping = aes(x=delay)) + 
+  geom_histogram(binwidth = 5) + 
+  labs(x = "Delay",
+       y = "Number of Flights",
+       title = "Number of Flights per Airplane Against Delay")
+```
+
+#### Plot number of flights per airplane against delay
+
+```{r, miss2, eval=TRUE, message=FALSE, results='hide'}         
+not_missing %>%
+  group_by(tailnum) %>%
+  summarise(
+    count = n(),
+    delay = mean(arr_delay)
+    ) %>%
+  ggplot(mapping = aes(x = delay, y = count)) + 
+  geom_point(alpha = 0.1) +
+  labs(x = "Delay",
+       y = "Number of Flights",
+       title = "Number of Flights per Airplane Against Delay")
+```
+
+Since I need to filter the same thing, all the time just store in a variable. Delete other stuff.
+
+```{r, notmiss, eval=TRUE, message=FALSE, results='hide'}
+planes_with_not_missing_values <- not_missing %>%
+  group_by(tailnum) %>%
+  summarise(count = n(), 
+            delay = mean(arr_delay),
+            delay_median = median(arr_delay)
+            )
+```
+
+Get the median delay for each ariplane
+
+```{r, median, eval=TRUE, message=FALSE, warning=FALSE, results='hide'}
+ggplot(data = planes_with_not_missing_values) +
+  geom_histogram(mapping = aes(x = delay_median)) +
+  geom_histogram(mapping = aes(x = delay), color = 'yellow', alpha = 0.3) +
+  labs(x = "Median Delay",
+       y = "Number of Flights",
+       title = "Delay of Airplanes")
+```
+
+Filter the airplanes that fly rarely and pipe them into ggplot which gets plussed into geoms. Try a few values for how many flights one should have done.
+
+```{r, filtpipe, eval=TRUE, message=FALSE, warning=FALSE, results='hide'}
+planes_with_not_missing_values %>%
+  filter(count > 5) %>%
+  ggplot(mapping = aes(x = delay)) + 
+  geom_histogram() +
+  labs(x = "Delay",
+       y = "Number of Flights",
+       title = "Delay of Airplanes That Fly Frquently")
+```
+
+  
+### 5.6.4 Summary functions
+
+These need to turn a vector of things into a single thing.
+
+What does quantile do?
+
+Not that helpful. Let's use it and find out.
+
+*Exercise:* Find out what these do
+
+```{r, q, eval=TRUE, message=FALSE, results='hide', warning=FALSE}
+first(x) # returns first element of x
+first(c(3, 4, 2)) # returns the first element from (3,4,2)
+last(x) # returns last element of x
+nth(x, 2) # returns the element from x with index = 2
+```
+
+Counts are important. Count the number of flights to each destination.
+
+```{r, cnt1, eval=TRUE, message=FALSE, warning=FALSE}
+by_destination <- group_by(flights, dest)
+
+summarise(by_destination, count = n())
+```
+
+Count the number of distinct carriers to each location.
+
+```{r, cnt2, eval=TRUE, message=FALSE, warning=FALSE}
+(by_destination <- flights %>%
+  group_by(dest) %>%
+  summarise(length(unique(carrier))))
+```
+
+You can weight the counting, here by distance. This counts how many airmiles a given airplane did from NYC
+
+```{r, cnt3, eval=TRUE, message=FALSE, warning=FALSE}
+(by_destination <- flights %>%
+  group_by(dest) %>%
+  summarise(length(unique(carrier)),sum(distance)))
+```
+
+Number of flights each day before 5am.
+
+```{r, 5am, eval=TRUE, message=FALSE, warning=FALSE}
+by_day <- flights %>%
+  group_by(year, month, day) %>%
+  filter(dep_time < 500) %>%
+  summarise(count = n())
+
+```
+
+How many flights are delayed each day by more than 1 hour?
+
+```{r, 1hr, eval=TRUE, message=FALSE, warning=FALSE}
+by_day <- flights %>%
+  group_by(year, month, day) %>%
+  filter(dep_delay > 60) %>%
+  summarise(count = n())
+
+by_day
+```
+
+## Assignment 5: 
+
+1. Do the exercises in this script file and work through the examples we didn't cover in class. As usual, turn the script into an .Rmd file, knit it, upload the .html and .pdf.
+
+2. Read/skim the chapter 5 from 'R for Data Science' to see what is available. Don't try to remember everything, but you should be able to remember what is possible so that you can find the commands again should you need them in the future.
+
+3. Grade Assignment 4 of your peers.
+
+4. Document at least 10 errors and warnings you actually hit during the week. If you do *not* hit that many errors or receive such warnings, congratulations.
+
+List of Errors
+
+- Error: unexpected ')' in: "  group_by(year, month, day) %>% filter(dep_delay > 60))". *Reason:* I forgot one opening bracket at the beginning of the code.
+
+- Error: object 'by_day' not found. *Reason:* I did not run the chunk that defined 'by_day' therefore the function where I used it threw an error as it could not find it.
+
+- Error: Column `distance` must be length 1 (a summary value), not 254. *Reason:* I ran into this error when I wanted to use the 'summarise()' function. It collapses a data frame to a single row but I had 254 different values which could not have been collapsed becuase I forgot to use the 'sum()' function that added these values up and resulted in one integer.
+
+- Error: Column `unique(carrier)` must be length 1 (a summary value), not 7. *Reason:* Same as before, I forgot to use the 'length()' function which gives that one particular integer I was interested in.
+
+- Error in unique(carr) : object 'carr' not found. *Reason:* I did not write the name of the column correctly, as it is carrier instead of carr.
+
+- Error in filter(dest != "HNL") : object 'dest' not found. *Reason:* I ran this code: ' by_destination <- filter(dest!='HNL')' where I forgot to include the data frame flights.
+
+- Error: attempt to use zero-length variable name. *Reason:* I accidentally ran the first row of a code chunk where the embedded commands are specified.
+
+- Error: Aesthetics must be valid data columns. Problematic aesthetic(s): size = count. 
+Did you mistype the name of a data column or forget to add stat()? *Reason:* I did not run that part of the chunk where I defined count.
+
+- Error: Column `flights` is of unsupported class data.frame. *Reason:* I ran the code 'top_10_delayed %>% mutate(flights,dep_delay_min_rank = min_rank(desc(dep_delay))) %>% filter(top_10_delayed, dep_delay_min_rank <= 10) %>% arrange(top_10_delayed, dep_delay_min_rank)' where I did the piping incorrectly.
+
+- Error in eval(lhs, parent, parent) : object 'first_10_rows' not found. *Reason:* I ran the code 'first_10_rows %>% slice(flights, 10, .preserve = TRUE)'. Yet again, I did the piping incorrectly, flights should have come before the 'slice()' function.
+
+5. Pick one of the hotels graphs in Chapter 3, section 6, A1. Case study, finding a good deal among hotels. Replicate it -- try it yourself for 10 minutes before you go looking at the code -- and then make a variation of it.
+
+My choice: Figure 3.1 Histogram of hotel stars, frequency/count plot
+
+CLEAR MEMORY
+
+```{r, clear_mem, eval=FALSE}
+rm(list=ls())
+```
+
+Import Libraries
+
+```{r, packages_install, eval=TRUE, results='hide', message=FALSE, warning=FALSE}
+# install.packages("scales")
+library(ggplot2)
+library(tidyverse)
+library(scales)
+theme_set(theme_bw())
+```
+
+Setting the Path
+
+```{r, path, eval=TRUE, results='hide', warning=FALSE, message=FALSE}
+dir <-  "D:/Egyetem/CEU/Coding_1/R-Coding/"
+```
+
+Location Folders
+
+```{r, loc, eval=TRUE, results='hide', warning=FALSE, message=FALSE}
+data_in <- paste0(dir,"da_data_repo/hotels-vienna/clean/")
+data_out <-  paste0(dir,"da_case_studies/ch03-hotels-vienna-explore/")
+output <- paste0(dir,"da_case_studies/ch03-hotels-vienna-explore/output/")
+func <- paste0(dir, "da_case_studies/ch00-tech-prep/")
+```
+
+Hotels Vienna
+
+Loading Dataset 
+
+```{r, dataset, eval=TRUE, results='hide', warning=FALSE, message=FALSE}
+vienna <- read_csv(paste0(data_in,"hotels-vienna.csv"))
+```
+
+View Dataset
+
+```{r, viewvie, eval=TRUE, results='hide', message=FALSE, warning=FALSE}
+View(vienna)
+```
+
+Grouping by stars and counting observations within each group
+
+```{r, stars, eval=TRUE, message=FALSE, warning=FALSE}
+by_stars <- vienna %>% group_by(stars)
+
+(stars_count <- by_stars %>% summarise(count = n()))
+```
+
+Creating the histogram plot
+
+```{r, hist2, eval=TRUE, message=FALSE, warning=FALSE}
+(p <- ggplot(data=by_stars, aes(x=stars)) +
+  geom_bar(color="blue", fill="blue", stat="count") +
+  geom_text(stat='count', aes(label=..count..), hjust=-0.5, size = 3) +
+  scale_x_continuous(limits = c(0.5,5.5), breaks = seq(1, 5, 0.5)) +
+  coord_flip() + 
+  labs(x = "Stars",
+       y = "Frequency",
+       title = "The Histogram of Stars"))
+```
+
+When compared to the graph in the book, it can be noticed that the number of hotels in each group are higher in the replaced one. One possible reason for this is that the dataset has been updated and new hotels have been added to it.
+
+A variation of this graph: a dot plot, as we are only interested in the ends of the bars.
+
+```{r, dotplot, eval=TRUE, message=FALSE, warning=FALSE}
+(p<-ggplot(by_stars) +
+   geom_point(stat="count", aes(x = stars)) + 
+   geom_text(stat="count", aes(x=stars, label=..count..), hjust=-0.5, size = 3) +
+   scale_x_continuous(limits = c(0.5,5.5), breaks = seq(1, 5, 0.5)) +
+   coord_flip() + 
+   labs(x = "Stars",
+        y = "Frequency",
+        title = "The Dot Plot of Stars"))
+```
+
+6. Instead of using the Vienna data, use the data for another city (pick London if you don't want to choose). Do a basic data exploration, comparing the city to Vienna in terms of any variables you find interesting. Three plots maximum, don't spend more than 30 minutes on the analysis, before writing it down (if you are not doing this in parallel).
+
+Chosen city: Dublin, Ireland
+
+Import libraries
+
+```{r, implib, eval=TRUE, message=FALSE, warning=FALSE, results='hide'}
+library(rlang)
+```
+
+Set the path
+
+```{r, pathset, eval=TRUE, message=FALSE, warning=FALSE, results='hide'}
+dir <-  "D:/Egyetem/CEU/Coding_1/R-Coding/"
+```
+
+Location Folders
+
+```{r, location, eval=TRUE, results='hide', warning=FALSE, message=FALSE}
+data_in <- paste0(dir,"da_data_repo/hotels-europe/clean/")
+data_out <-  paste0(dir,"da_case_studies/ch03-hotels-europe-compare/")
+output <- paste0(dir,"da_case_studies/ch03-hotels-europe-compare/output/")
+func <- paste0(dir, "da_case_studies/ch00-tech-prep/")
+```
+
+Load in clean and tidy data and create workfile
+
+```{r, join, eval=TRUE, message=FALSE, warning=FALSE, results='hide'}
+hotels_europe_price <- read_csv(paste0(data_in,"hotels-europe_price.csv"))
+hotels_europe_features <- read_csv(paste0(data_in,"hotels-europe_features.csv"))
+
+hotels_europe <- left_join(hotels_europe_price, hotels_europe_features, by = "hotel_id")
+rm(hotels_europe_price)
+rm(hotels_europe_features)
+```
+
+View Dataset
+
+```{r, viewvienna, eval=TRUE, results='hide', message=FALSE, warning=FALSE}
+View(hotels_europe)
+```
+
+Histogram of stars in both cities
+
+Filtering the data based on city
+
+```{r, cityfilter, eval=TRUE, message=FALSE, warning=FALSE, results='hide'}
+hotels_vienna <- hotels_europe %>%
+  filter(city=='Vienna')
+
+hotels_dublin <- hotels_europe %>%
+  filter(city=='Dublin')
+```
+
+**Vienna**
+
+```{r, viennastars, eval=TRUE, message=FALSE, warning=FALSE}
+by_stars_vienna <- hotels_vienna %>% group_by(stars)
+
+(stars_count_vienna <- by_stars_vienna %>% summarise(count = n()))
+```
+
+```{r, hist, eval=TRUE, message=FALSE, warning=FALSE}
+(p <- ggplot(data=by_stars_vienna, aes(x=stars)) +
+  geom_bar(color="blue", fill="blue", stat="count") +
+  geom_text(stat='count', aes(label=..count..), hjust=-0.5, size = 3) +
+  scale_x_continuous(limits = c(0.5,5.5), breaks = seq(1, 5, 0.5)) +
+  coord_flip() + 
+  labs(x = "Stars",
+       y = "Frequency",
+       title = "The Histogram of Stars in Vienna"))
+```
+
+**Dublin**
+
+```{r, londonstars, eval=TRUE, message=FALSE, warning=FALSE}
+by_stars_dublin <- hotels_dublin %>% group_by(stars)
+
+(stars_count_dublin <- by_stars_dublin %>% summarise(count = n()))
+```
+
+```{r, hist3, eval=TRUE, message=FALSE, warning=FALSE}
+(p <- ggplot(data=by_stars_dublin, aes(x=stars)) +
+  geom_bar(color="blue", fill="blue", stat="count") +
+  geom_text(stat='count', aes(label=..count..), hjust=-0.5, size = 3) +
+  scale_x_continuous(limits = c(0.5,5.5), breaks = seq(1, 5, 0.5)) +
+  coord_flip() + 
+  labs(x = "Stars",
+       y = "Frequency",
+       title = "The Histogram of Stars in Dublin"))
+```
+
+The frequency distribution of hotels with certain stars is quite similar in the two city although their modes differ. For Vienna this is at 4.0 stars with a count of 1229 hotels, for Dublin the mode is at 3.0 stars with a count of 559. There are fewer hotels with extra high or extra low ratings in both cases and '.5' ratings also don't tend to be common in either case.
+
+First, let's look at the hotels' distances from the city centre in each city.
+
+**Vienna**
+
+```{r, viedist, eval=TRUE, message=FALSE, warning=FALSE}
+ggplot(data = hotels_vienna, aes (x = distance, y = (..count..))) +
+  geom_histogram(binwidth = 0.5, fill = "blue", size = 0.25, alpha = 0.8,  show.legend=F, na.rm =TRUE) +
+  labs(x = "Distance to City Center (km)", y = "Frequency", title="The Distribution of Distance to City Center in Dublin") +
+  scale_x_continuous(limits = c(0, 14), breaks = seq(0, 14, by = 1))
+```
+
+
+**Dublin**
+
+```{r, lnddist, eval=TRUE, message=FALSE, warning=FALSE}
+ggplot(data = hotels_dublin, aes (x = distance, y = (..count..))) +
+  geom_histogram(binwidth = 0.5, fill = "blue", size = 0.25, alpha = 0.8,  show.legend=F, na.rm =TRUE) +
+  labs(x = "Distance to City Center (km)", y = "Frequency", title="The Distribution of Distance to City Centre in Vienna") +
+  scale_x_continuous(limits = c(0, 14), breaks = seq(0, 14, by = 1))
+```
+
+Both in Vienna and in Dublin most of the hotels are within 2 kms from the city center. In case of Vienna, the mode is around 1 km while for Dublin the mode is around 0.5 km. 
+
+On the Vienna plot there are a few extreme values which is the result of taking those hotels also into consideration which are closer to the airport rather than the city.
+
+For Dublin no such values can be observed, however, after the initial decrease with the distance, there is a slight increase in the number of hotels that are 5 to 6 kms from the center.
+
+Next, let's look at the relative price distribution of hotels in each city.
+
+**Vienna**
+
+```{r, vieprices2, eval=TRUE, message=FALSE, warning=FALSE}
+ggplot(data = hotels_vienna, aes (x = price, y = (..count..)/sum(..count..))) +
+  geom_histogram(binwidth = 10, fill = "blue", size = 0.25, alpha = 0.8, show.legend=F, na.rm =TRUE) +
+  labs(x = "Price", y = "Percentage", title="The Distribution of Hotel Prices in Vienna") +
+  scale_x_continuous(limits = c(0, 500), breaks = seq(0, 500, by = 100)) +
+  scale_y_continuous(labels = scales::percent_format())
+```
+
+**Dublin**
+
+```{r, lndprices, eval=TRUE, message=FALSE, warning=FALSE}
+ggplot(data = hotels_dublin, aes (x = price, y = (..count..)/sum(..count..))) +
+  geom_histogram(binwidth = 10, fill = "blue", size = 0.25, alpha = 0.8,  show.legend=F, na.rm =TRUE) +
+  labs(x = "Price", y = "Percentage", title="The Distribution of Hotel Prices in Dublin") +
+  scale_x_continuous(limits = c(0, 500), breaks = seq(0, 500, by = 100)) +
+  scale_y_continuous(labels = scales::percent_format())
+```
+
+One of the tendencies that can be observed is that prices in Dublin tend to be higher than in Vienna which is not surprising as Dublin is usually listed as quite an expensive city in Europe. On the Vienna related plot we can observe a long right tail which means that we have a few observations with large values with most observations having smaller values. This kind of skewness is quite common when we are looking at distributions of prices, incomes or population.
+
+The mode of the histogram is at 90 euros for Vienna and 170 euros for Dublin.
+
+This time there are no extreme values in either case. If there were, they could be the results of certain events (e.g. a conference) in that particular hotel.

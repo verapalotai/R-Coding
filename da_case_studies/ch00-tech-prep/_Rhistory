@@ -1,0 +1,512 @@
+cols <- c("grey", Color[1])
+line_types <- c("solid", "dotted")
+Picked_3stocks <- c("MSFT", "AAPL", "AMD")
+Picked_6stocks <- c("AAPL", "ADBE", "AMD", "MSFT", "HPQ", "INTC")
+cols <- c("grey", color[1])
+line_types <- c("solid", "dotted")
+g05 <- my_monthly_data %>%
+filter (ticker %in% c(Picked_3stocks, INDEX)) %>%
+mutate (is.index = ifelse (ticker ==INDEX,TRUE,FALSE)) %>%
+ggplot (aes(x=date-30,y= monthly_return, color = ticker, fill=is.index)) +
+geom_line (data = pick ('ticker != INDEX'),aes(linetype = is.index)) +
+geom_line (data = pick ('ticker == INDEX'), color = "black", aes(linetype = is.index)) +
+scale_linetype_manual (name = "Linetype", values = line_types, labels = c("Stocks", INDEX)) +
+scale_x_date (date_labels = "%Y", date_breaks = "1 year",
+limits = c(as.Date ("2006-12-01"), as.Date ("2012-01-03")),
+expand = c(0.01,0.01)) +
+scale_y_continuous(limits=c(-0.3,0.6)) +
+labs (title = paste0(paste0(Picked_3stocks, collapse = ", ") ," Stocks and ", INDEX, " Index"),
+x = "years", y = "monthly return") +
+theme_bg()
+g05
+INDEX <- "^GSPC"
+coverage_DT <- stock_data %>%
+group_by (ticker) %>%
+summarize (number_of_trade_days = n()) %>%
+mutate (coverage = number_of_trade_days / max(number_of_trade_days) * 100) %>%
+mutate (coverage = round (coverage, digits = 1)) %>%
+select (ticker, coverage, number_of_trade_days) %>%
+arrange(coverage) %>%
+data.table()
+########################################
+# Ch 12 time series
+# S&P500 - IT sector stocks
+#
+# describe series, show graphs
+#
+# This file: gets and saves financial data from various sources
+#
+# w/ Imre Boda
+# version: 2019-07-22
+rm(list=ls())
+# CHECK WORKING DIRECTORY - CHANGE IT TO YOUR WORKING DIRECTORY
+#dir <-  "C:/Users/GB/Dropbox (MTA KRTK)/bekes_kezdi_textbook/"
+dir <- "D:/Dropbox (MTA KRTK)/bekes_kezdi_textbook/"
+#location folders
+data_in <- paste0(dir,"cases_studies_public/sandp-it/raw/")
+output <- paste0(dir,"textbook_work/ch12/sandp-stocks2/output/")
+func <- paste0(dir, "textbook_work/ch00_tech_prep/")
+#call function
+source(paste0(func, "theme_bg.R"))
+theme_set (theme_bg())
+# This implements the requirements from Gabor Bekes sent on the 6th of August, 2019.
+library (data.table)
+library (dplyr)
+library (stringr)
+library (ggplot2)
+library(viridis)
+library(plotly)
+library(ggrepel)
+########################################################################################
+###### Read Stock Info
+files <- list.files (path = data_in, full.names = TRUE, pattern = "^ready.*.csv")
+stock_data <- lapply(files,function (x) fread (x, integer64="numeric")) %>%
+rbindlist(use.names=TRUE)
+Hmisc::describe(stock_data)
+########################################################################################
+###### Set Index that will be used in comparisons
+INDEX <- "^GSPC"
+########################################################################################
+###### Setting Graph Theme and graph colors
+### Color Variables
+Color1 <- "#3d4d8a"
+Color2 <- "#43bf71"
+Color3 <- "#23888e"
+Color4 <- "#440154"
+########################################################################################
+###### Function used to subset data in ggplot
+pick <- function (condition)
+# Function evaluates a condition passed to it. The condition is a data table filter. Used in ggplot.
+{
+function (d) d %>% filter (eval(parse(text = condition)))
+}
+########################################################################################
+###### Functions used to calculate monthly returns. They all assume certain column names and formats in the data paarmeter they receive
+calc_annual_return <- function (dt, tickers_list)
+# Wrapper function Calculates annual returns of tickers in ticker_list in provided dt (table, dataframe, tibble)
+{ return (dt %>% orderby_enddates(tickers_list, "year") %>% annual_return())}
+calc_monthly_return <- function (dt, tickers_list)
+# Wrapper function Calculates amonthly returns of tickers in ticker_list in provided dt (table, dataframe, tibble)
+{ return (dt %>% orderby_enddates(tickers_list, "month") %>% monthly_return())}
+orderby_enddates <- function (dt, tickers_list, year_or_month)
+# orders rows by ref.date for each ticker in tickers_list, and keeps only those that are likely end dates of years / months (this is in order to exclude cases from return calculation when ticker was introduced in stock market mid year / mid month)
+{
+dt %>%
+select (ticker, ref.date, price.adjusted) %>%
+filter (ticker %in% tickers_list) %>%
+mutate (date = as.Date (ref.date)) %>%
+group_by (ticker, get_yearmonth(year_or_month, ref.date)) %>%
+top_n (1,date) %>%
+filter (end_dates(year_or_month, ref.date)==TRUE) %>%
+ungroup() %>%
+group_by(ticker) %>%
+return()
+}
+annual_return <- function (dt)
+# Take this and previous year's starting date adjusted price and calculate annual return as (current_year_lastdate_price - prev_year_lastdate_price) / prev_year_lastdate_price). year_diff used to check if two consecutive rows represent consecutive years
+{
+dt %>%
+mutate (date = as.Date (ref.date)) %>%
+mutate (prev.price.adjusted = ifelse (year_diff (ref.date, dplyr::lag(ref.date, order_by=date))==1,
+dplyr::lag(price.adjusted, order_by = date),
+NA)) %>%
+mutate (annual_return = price.adjusted / prev.price.adjusted -1) %>%
+return()
+}
+monthly_return <- function (dt)
+# Take this and previous month's starting date adjusted price and calculate monthly return as (current_month_lastdate_price - prev_month_lastdate_price) / prev_month_lastdate_price). days_diff used to check if two consecutive rows represent consecutive months
+{
+dt %>%
+mutate (prev.price.adjusted = ifelse (days_diff (ref.date, dplyr::lag(ref.date, order_by=date)) %in% seq (25,35),
+dplyr::lag(price.adjusted, order_by = date),
+NA)) %>%
+mutate (monthly_return = price.adjusted / prev.price.adjusted -1) %>%
+return()
+}
+year_diff <- function (year1_string, year2_string)
+# Function calculates the difference of the year parts of a date text where the first 4 digits represent the year (e.g. "2005-01-01" and "2004-12-31" will return TRUE)
+{
+diff <- as.numeric (substr(year1_string,1,4)) - as.numeric(substr(year2_string,1,4))
+return(diff)
+}
+days_diff <- function (month1_string, month2_string)
+# Function that calculates the day difference between two dates (in string format)
+{
+diff <- as.numeric(as.Date (month1_string) - as.Date(month2_string))
+return(diff)
+}
+end_dates <- function (year_or_month, ref.date)
+# Checks if a given date can be valid year end date or month end date
+{
+ACCEPTED_PARAM <- c("year", "month")
+YEAR_END_DATES <- c("12-28", "12-29", "12-30", "12-31")
+MONTH_END_DATES <- c("26", "27", "28", "29", "30", "31")
+result <- ifelse (year_or_month %in% ACCEPTED_PARAM,
+ifelse (year_or_month == "year", (substr (ref.date,6,10) %in% YEAR_END_DATES),
+(substr (ref.date,9,10) %in% MONTH_END_DATES)),
+NA)
+return (result)
+}
+get_yearmonth <- function (year_or_month, ref.date)
+# Substracts year or year and month parts of a string that is in "yyyy-mm-dd" format
+{
+ACCEPTED_PARAM <- c("year", "month")
+final_pos <- ifelse (year_or_month %in%  ACCEPTED_PARAM,
+ifelse (year_or_month=="month",7,4),
+NA)
+return (substr(ref.date,1,final_pos))
+}
+#############################################################################################################################
+###### 1. Data prep:
+#       - use 20 ys of data
+#       - check data quality, show a table with coverage for all the stocks we have in the downloaded data.(% of trading days, we have the data)
+#       - filter for stocks with 75% coverage in data
+### a table with coverage for all the stocks
+coverage_DT <- stock_data %>%
+group_by (ticker) %>%
+summarize (number_of_trade_days = n()) %>%
+mutate (coverage = number_of_trade_days / max(number_of_trade_days) * 100) %>%
+mutate (coverage = round (coverage, digits = 1)) %>%
+select (ticker, coverage, number_of_trade_days) %>%
+arrange(coverage) %>%
+data.table()
+### filter for stocks with 75% coverage in data
+stock_data_filtered <- coverage_DT %>%
+filter (coverage >= 75) %>%
+left_join (stock_data) %>%
+data.table()
+#############################################################################################################################
+###### 1. Show charts
+# returns /yield is %, based on last value of the period
+#       - g1. MSFT daily yields 20 ys
+#       - g2. MSFT candlestick graphs, aggregate for months
+#       - g3. MSFT monthly yields, 20 ys
+#       - g4. MSFT annual yields, 20 ys (bar chart)
+### g1.: MSFT daily yields 20 ys (for daily yields price.close and price.open used, not price.adjusted)
+# TODO
+# just have every 4-5ys
+# color
+g01 <- stock_data %>%
+filter (ticker == "MSFT") %>%
+mutate (date = as.Date (ref.date)) %>%
+filter (date > "1998-12-27" & date < "2019-01-01") %>%
+mutate (daily_yield = price.close/price.open-1) %>%
+ggplot (aes (x = date, y = daily_yield)) + geom_line(color=color[1]) +
+scale_x_date (date_labels = "%Y-%m-%d", date_breaks = "12 month",
+limits = c(as.Date ("1998-01-01"), as.Date ("2019-01-03")),
+expand = c(0,0)) +
+theme_bg() +
+theme (axis.text.x = element_text (angle = 45, hjust = 1)) +
+labs (title = "MSFT daily yields", x = "years", y = "daily yields")
+g01
+ggsave(g01, filename = paste0(output,"ch12_g01.png"),
+dpi = 1200, type = "cairo", width=mywidth_small, height=myheight_small, units = "cm")
+g03 <- calc_monthly_return (stock_data, "MSFT") %>%
+ggplot (aes(x=date-30,y=monthly_return)) +
+geom_line(color=color[1]) +
+scale_x_date (date_labels = "%Y-%m", date_breaks = "24 month",
+limits = c(as.Date ("1998-01-01"), as.Date ("2019-01-03")),
+expand = c(0,0)) +
+theme (axis.text.x = element_text (angle = 45, hjust = 1)) +
+labs (title = "MSFT monthly yields",
+x = "months", y = "monthly yield")
+g03
+ggsave(g03, filename = paste0(output,"ch12_g03.png"),
+dpi = 1200, type = "cairo", width=mywidth_small, height=myheight_small, units = "cm")
+g04a <- calc_monthly_return(stock_data, "MSFT") %>%
+ggplot (aes(x=date-30,y=monthly_return)) +
+geom_bar(stat="identity", color=color[1]) +
+scale_x_date (date_labels = "%Y-%m", date_breaks = "3 month",
+limits = c(as.Date ("2008-01-01"), as.Date ("2010-01-03")),
+expand = c(0.01,0.01)) +
+theme (axis.text.x = element_text (angle = 45, hjust = 1)) +
+labs (title = "MSFT monthly return - crisis years",
+x = "months", y = "monthly yield")
+g04a
+ggsave(g04a, filename = paste0(output,"ch12_g04.png"),
+dpi = 1200, type = "cairo", width=mywidth_small, height=myheight_small, units = "cm")
+g04a <- calc_monthly_return(stock_data, "MSFT") %>%
+ggplot (aes(x=date-30,y=monthly_return)) +
+geom_bar(stat="identity", color=color[1], fill=color[1]) +
+scale_x_date (date_labels = "%Y-%m", date_breaks = "3 month",
+limits = c(as.Date ("2008-01-01"), as.Date ("2010-01-03")),
+expand = c(0.01,0.01)) +
+theme (axis.text.x = element_text (angle = 45, hjust = 1)) +
+labs (title = "MSFT monthly return - crisis years",
+x = "months", y = "monthly yield")
+g04a
+ggsave(g04a, filename = paste0(output,"ch12_g04.png"),
+dpi = 1200, type = "cairo", width=mywidth_small, height=myheight_small, units = "cm")
+g04 <- calc_annual_return(stock_data, "MSFT") %>%
+ggplot (aes(x=date-365,y=annual_return)) +
+geom_bar(stat="identity", color=color[1]) +
+scale_x_date (date_labels = "%Y", date_breaks = "1 year",
+limits = c(as.Date ("1998-01-01"), as.Date ("2019-01-03")),
+expand = c(0.01,0.01)) +
+theme (axis.text.x = element_text (angle = 45, hjust = 1)) +
+labs (title = "MSFT annual return",
+x = "years", y = "annual yield")
+g04
+ggsave(g04, filename = paste0(output,"ch12_g04.png"),
+dpi = 1200, type = "cairo", width=mywidth_small, height=myheight_small, units = "cm")
+g04 <- calc_annual_return(stock_data, "MSFT") %>%
+ggplot (aes(x=date-365,y=annual_return)) +
+geom_bar(stat="identity", color=color[1], fill=color[1]) +
+scale_x_date (date_labels = "%Y", date_breaks = "1 year",
+limits = c(as.Date ("1998-01-01"), as.Date ("2019-01-03")),
+expand = c(0.01,0.01)) +
+theme (axis.text.x = element_text (angle = 45, hjust = 1)) +
+labs (title = "MSFT annual return",
+x = "years", y = "annual yield")
+g04
+ggsave(g04, filename = paste0(output,"ch12_g04.png"),
+dpi = 1200, type = "cairo", width=mywidth_small, height=myheight_small, units = "cm")
+g01 <- stock_data %>%
+filter (ticker == "MSFT") %>%
+mutate (date = as.Date (ref.date)) %>%
+filter (date > "1998-12-27" & date < "2019-01-01") %>%
+mutate (daily_yield = price.close/price.open-1) %>%
+ggplot (aes (x = date, y = daily_yield)) + geom_line(color=color[1]) +
+scale_x_date (date_labels = "%Y-%m-%d", date_breaks = "36 month",
+limits = c(as.Date ("1998-01-01"), as.Date ("2019-01-03")),
+expand = c(0,0)) +
+theme_bg() +
+theme (axis.text.x = element_text (angle = 45, hjust = 1)) +
+labs (title = "MSFT daily yields", x = "years", y = "daily yields")
+g01
+ggsave(g01, filename = paste0(output,"ch12_g01.png"),
+dpi = 1200, type = "cairo", width=mywidth_small, height=myheight_small, units = "cm")
+g03 <- calc_monthly_return (stock_data, "MSFT") %>%
+ggplot (aes(x=date-30,y=monthly_return)) +
+geom_line(color=color[1]) +
+scale_x_date (date_labels = "%Y-%m", date_breaks = "24 month",
+limits = c(as.Date ("1998-01-01"), as.Date ("2019-01-03")),
+expand = c(0,0)) +
+theme (axis.text.x = element_text (angle = 45, hjust = 1)) +
+labs (title = "MSFT monthly yields",
+x = "months", y = "monthly yield")
+g03
+ggsave(g03, filename = paste0(output,"ch12_g03.png"),
+dpi = 1200, type = "cairo", width=mywidth_small, height=myheight_small, units = "cm")
+g01 <- stock_data %>%
+filter (ticker == "MSFT") %>%
+mutate (date = as.Date (ref.date)) %>%
+filter (date > "1998-12-27" & date < "2019-01-01") %>%
+mutate (daily_yield = price.close/price.open-1) %>%
+ggplot (aes (x = date, y = daily_yield)) + geom_line(color=color[1]) +
+scale_x_date (date_labels = "%Y-%m-%d", date_breaks = "24 month",
+limits = c(as.Date ("1998-01-01"), as.Date ("2019-01-03")),
+expand = c(0,0)) +
+theme_bg() +
+theme (axis.text.x = element_text (angle = 45, hjust = 1)) +
+labs (title = "MSFT daily yields", x = "years", y = "daily yields")
+g01
+ggsave(g01, filename = paste0(output,"ch12_g01.png"),
+dpi = 1200, type = "cairo", width=mywidth_small, height=myheight_small, units = "cm")
+# Common definitions for g5 - g8
+Picked_3stocks <- c("MSFT", "AAPL", "AMD")
+Picked_6stocks <- c("AAPL", "ADBE", "AMD", "MSFT", "HPQ", "INTC")
+cols <- c("grey", color[1])
+line_types <- c("solid", "dotted")
+### g5. MSFT, AAPL, INTC + index sp500
+# TODO
+# colors: viridis
+# have GSPC bold
+# note stock tickers on the graph, not separate labels
+# y scale -0.3 - -0.6 or stg like that
+g05 <- my_monthly_data %>%
+filter (ticker %in% c(Picked_3stocks, INDEX)) %>%
+mutate (is.index = ifelse (ticker ==INDEX,TRUE,FALSE)) %>%
+ggplot (aes(x=date-30,y= monthly_return, color = ticker, fill=is.index)) +
+geom_line (data = pick ('ticker != INDEX'),aes(linetype = is.index)) +
+geom_line (data = pick ('ticker == INDEX'), color = "black", aes(linetype = is.index)) +
+scale_linetype_manual (name = "Linetype", values = line_types, labels = c("Stocks", INDEX)) +
+scale_x_date (date_labels = "%Y", date_breaks = "1 year",
+limits = c(as.Date ("2006-12-01"), as.Date ("2012-01-03")),
+expand = c(0.01,0.01)) +
+scale_y_continuous(limits=c(-0.3,0.6)) +
+labs (title = paste0(paste0(Picked_3stocks, collapse = ", ") ," Stocks and ", INDEX, " Index"),
+x = "years", y = "monthly return") +
+theme_bg()
+g05
+# Common definitions for g5 - g8
+Picked_3stocks <- c("MSFT", "AAPL", "AMD")
+Picked_6stocks <- c("AAPL", "ADBE", "AMD", "MSFT", "HPQ", "INTC")
+cols <- c("grey", color[1])
+line_types <- c("solid", "dotted")
+### g5. MSFT, AAPL, INTC + index sp500
+# TODO
+# colors: viridis
+# have GSPC bold
+# note stock tickers on the graph, not separate labels
+# y scale -0.3 - -0.6 or stg like that
+g05 <- my_monthly_data %>%
+filter (ticker %in% c(Picked_3stocks, INDEX)) %>%
+mutate (is.index = ifelse (ticker ==INDEX,TRUE,FALSE)) %>%
+ggplot (aes(x=date-30,y= monthly_return, color = ticker, fill=is.index)) +
+geom_line (data = pick ('ticker != INDEX'),aes(linetype = is.index)) +
+geom_line (data = pick ('ticker == INDEX'), color = "black", aes(linetype = is.index)) +
+scale_linetype_manual (name = "Linetype", values = line_types, labels = c("Stocks", INDEX)) +
+scale_x_date (date_labels = "%Y", date_breaks = "1 year",
+limits = c(as.Date ("2006-12-01"), as.Date ("2012-01-03")),
+expand = c(0.01,0.01)) +
+scale_y_continuous(limits=c(-0.3,0.6)) +
+labs (title = paste0(paste0(Picked_3stocks, collapse = ", ") ," Stocks and ", INDEX, " Index"),
+x = "years", y = "monthly return") +
+theme_bg()
+my_monthly_data <- calc_monthly_return(stock_data_filtered, stock_data_filtered[,unique(ticker)]) %>%
+select (ticker, ref.date, date, price.adjusted,prev.price.adjusted,monthly_return) %>%
+data.table()
+#############################################################################################################################
+###### 3. How to make comparisons.
+#         Show  monthly returns
+#         - g5. MSFT, AAPL, INTC + index sp500
+#         - g6. All 6 selected stocks + index sp500
+#         - g7. same as g6, but all stocks are grey
+#         - g8. trellis chart, each with index
+# Common definitions for g5 - g8
+Picked_3stocks <- c("MSFT", "AAPL", "AMD")
+Picked_6stocks <- c("AAPL", "ADBE", "AMD", "MSFT", "HPQ", "INTC")
+cols <- c("grey", color[1])
+line_types <- c("solid", "dotted")
+### g5. MSFT, AAPL, INTC + index sp500
+# TODO
+# colors: viridis
+# have GSPC bold
+# note stock tickers on the graph, not separate labels
+# y scale -0.3 - -0.6 or stg like that
+g05 <- my_monthly_data %>%
+filter (ticker %in% c(Picked_3stocks, INDEX)) %>%
+mutate (is.index = ifelse (ticker ==INDEX,TRUE,FALSE)) %>%
+ggplot (aes(x=date-30,y= monthly_return, color = ticker, fill=is.index)) +
+geom_line (data = pick ('ticker != INDEX'),aes(linetype = is.index)) +
+geom_line (data = pick ('ticker == INDEX'), color = "black", aes(linetype = is.index)) +
+scale_linetype_manual (name = "Linetype", values = line_types, labels = c("Stocks", INDEX)) +
+scale_x_date (date_labels = "%Y", date_breaks = "1 year",
+limits = c(as.Date ("2006-12-01"), as.Date ("2012-01-03")),
+expand = c(0.01,0.01)) +
+scale_y_continuous(limits=c(-0.3,0.6)) +
+labs (title = paste0(paste0(Picked_3stocks, collapse = ", ") ," Stocks and ", INDEX, " Index"),
+x = "years", y = "monthly return") +
+theme_bg()
+g05
+my_monthly_data <- calc_monthly_return(stock_data_filtered, stock_data_filtered[,unique(ticker)]) %>%
+select (ticker, ref.date, date, price.adjusted,prev.price.adjusted,monthly_return) %>%
+data.table()
+stock_data_filtered <- coverage_DT %>%
+filter (coverage >= 75) %>%
+left_join (stock_data) %>%
+data.table()
+coverage_DT <- stock_data %>%
+group_by (ticker) %>%
+summarize (number_of_trade_days = n()) %>%
+mutate (coverage = number_of_trade_days / max(number_of_trade_days) * 100) %>%
+mutate (coverage = round (coverage, digits = 1)) %>%
+select (ticker, coverage, number_of_trade_days) %>%
+arrange(coverage) %>%
+data.table()
+g04a <- calc_monthly_return(stock_data, "MSFT") %>%
+ggplot (aes(x=date-30,y=monthly_return)) +
+geom_bar(stat="identity", color=color[1], fill=color[1]) +
+scale_x_date (date_labels = "%Y-%m", date_breaks = "3 month",
+limits = c(as.Date ("2008-01-01"), as.Date ("2010-01-03")),
+expand = c(0.01,0.01)) +
+theme (axis.text.x = element_text (angle = 45, hjust = 1)) +
+labs (title = "MSFT monthly return - crisis years",
+x = "months", y = "monthly yield")
+g04a
+ggsave(g04a, filename = paste0(output,"ch12_g04a.png"),
+dpi = 1200, type = "cairo", width=mywidth_small, height=myheight_small, units = "cm")
+### g4. MSFT annual yields, 20 ys (bar chart)
+#TODO
+# color bars
+g04 <- calc_annual_return(stock_data, "MSFT") %>%
+ggplot (aes(x=date-365,y=annual_return)) +
+geom_bar(stat="identity", color=color[1], fill=color[1]) +
+scale_x_date (date_labels = "%Y", date_breaks = "1 year",
+limits = c(as.Date ("1998-01-01"), as.Date ("2019-01-03")),
+expand = c(0.01,0.01)) +
+theme (axis.text.x = element_text (angle = 45, hjust = 1)) +
+labs (title = "MSFT annual return",
+x = "years", y = "annual yield")
+g04
+ggsave(g04, filename = paste0(output,"ch12_g04.png"),
+dpi = 1200, type = "cairo", width=mywidth_small, height=myheight_small, units = "cm")
+g04 <- calc_annual_return(stock_data, "MSFT") %>%
+ggplot (aes(x=date-365,y=annual_return)) +
+geom_bar(stat="identity", color=color[1], fill=color[1]) +
+scale_x_date (date_labels = "%Y", date_breaks = "2 year",
+limits = c(as.Date ("1998-01-01"), as.Date ("2019-01-03")),
+expand = c(0.01,0.01)) +
+theme (axis.text.x = element_text (angle = 45, hjust = 1)) +
+labs (title = "MSFT annual return",
+x = "years", y = "annual yield")
+g04
+ggsave(g04, filename = paste0(output,"ch12_g04.png"),
+dpi = 1200, type = "cairo", width=mywidth_small, height=myheight_small, units = "cm")
+g21 <- stock_data %>%
+filter (ticker == "MSFT") %>%
+mutate (date = as.Date (ref.date)) %>%
+filter (date > "1998-12-27" & date < "2019-01-01") %>%
+ggplot (aes (x = date, y = price.close)) + geom_line(color=color[1]) +
+scale_x_date (date_labels = "%Y-%m-%d", date_breaks = "24 month",
+limits = c(as.Date ("1998-01-01"), as.Date ("2019-01-03")),
+expand = c(0,0)) +
+theme_bg() +
+theme (axis.text.x = element_text (angle = 45, hjust = 1)) +
+labs (title = "MSFT daily yields", x = "years", y = "daily yields")
+g21
+g21 <- stock_data %>%
+filter (ticker == "AAPL") %>%
+mutate (date = as.Date (ref.date)) %>%
+filter (date > "1998-12-27" & date < "2019-01-01") %>%
+ggplot (aes (x = date, y = price.close)) + geom_line(color=color[1]) +
+scale_x_date (date_labels = "%Y-%m-%d", date_breaks = "24 month",
+limits = c(as.Date ("1998-01-01"), as.Date ("2019-01-03")),
+expand = c(0,0)) +
+theme_bg() +
+theme (axis.text.x = element_text (angle = 45, hjust = 1)) +
+labs (title = "MSFT daily yields", x = "years", y = "daily yields")
+g21
+g21 <- stock_data %>%
+filter (ticker == "AAPL") %>%
+mutate (date = as.Date (ref.date)) %>%
+filter (date > "1998-12-27" & date < "2019-01-01") %>%
+ggplot (aes (x = date, y = price.close)) + geom_line(color=color[1]) +
+scale_x_date (date_labels = "%Y-%m-%d", date_breaks = "24 month",
+limits = c(as.Date ("1998-01-01"), as.Date ("2019-01-03")),
+expand = c(0,0)) +
+theme_bg() +
+theme (axis.text.x = element_text (angle = 45, hjust = 1)) +
+labs (title = "MSFT daily yields", x = "years", y = "daily yields")
+g21
+ggsave(g21, filename = paste0(output,"ch12_g21.png"),
+dpi = 1200, type = "cairo", width=mywidth_small, height=myheight_small, units = "cm")
+g22 <- stock_data %>%
+filter (ticker == "AAPL") %>%
+mutate (log_price = log (price.close) ) %>%
+mutate (date = as.Date (ref.date)) %>%
+filter (date > "1998-12-27" & date < "2019-01-01") %>%
+ggplot (aes (x = date, y = log_price)) + geom_line(color=color[1]) +
+scale_x_date (date_labels = "%Y-%m-%d", date_breaks = "24 month",
+limits = c(as.Date ("1998-01-01"), as.Date ("2019-01-03")),
+expand = c(0,0)) +
+theme_bg() +
+theme (axis.text.x = element_text (angle = 45, hjust = 1)) +
+labs (title = "MSFT daily yields", x = "years", y = "daily yields")
+g22
+g22 <- stock_data %>%
+filter (ticker == "AAPL") %>%
+mutate (log_price = log (price.close) ) %>%
+mutate (date = as.Date (ref.date)) %>%
+filter (date > "1998-12-27" & date < "2019-01-01") %>%
+ggplot (aes (x = date, y = log_price)) + geom_line(color=color[1]) +
+scale_x_date (date_labels = "%Y-%m-%d", date_breaks = "24 month",
+limits = c(as.Date ("1998-01-01"), as.Date ("2019-01-03")),
+expand = c(0,0)) +
+theme_bg() +
+theme (axis.text.x = element_text (angle = 45, hjust = 1)) +
+labs (title = "MSFT daily yields", x = "years", y = "daily yields")
+g22
+ggsave(g22, filename = paste0(output,"ch12_g22.png"),
+dpi = 1200, type = "cairo", width=mywidth_small, height=myheight_small, units = "cm")
