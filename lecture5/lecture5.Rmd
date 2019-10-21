@@ -185,12 +185,14 @@ popular_destinations <- flights %>%
 
 The following chunks have most, but not all of the code necessary to achieve their goal. Fix as many of them as you can. **Note:** You'll have to switch off the `eval = FALSE`.
 
-```{r, eval = FALSE}
+```{r, eval = TRUE}
 # Compute for every day how many minutes above the average delay a given flight is.
+(flights_subset %>%
+  group_by(year, month,day) %>%
+  filter(!is.na(dep_delay)) %>%
+  transmute(dep_delay, avg_delay = mean(dep_delay)) %>%
+  mutate(difference_from_daily_mean_dep_delay = dep_delay-avg_delay))
 
-flights_small %>%
-  group_by(...) %>%
-  mutate(difference_from_daily_mean_dep_delay = <some-function-name>(...))
 ```
 
 Now compute the daily standard deviation in departure delays. Explain in one sentence what it means for that to be higher or lower.
