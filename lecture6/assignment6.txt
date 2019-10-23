@@ -1,0 +1,149 @@
+---
+title: "Assignment 6"
+author: "Veronika Palotai"
+date: '2019 10 22 '
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Exercise 0:** Manage your time. If you spend too much time on the assignment, it may be too long, and you may benefit from skipping an exercise. Since this lesson is lost on most people, exercise 0 requires you to skip one of the other exercises this week.^[If you want to be cute, skip exercise 0.] That is, write down which exercise you want to skip and why ("saves the most of time because it is the hardest" or "it's the most useless as you are quite confident in material"). Do not work on it. Of course, if you skip any additional exercise due to lack of time, highlight this, but that will cost some part of the grade, whereas skipping an exercise as part of exercise 0 will not.
+
+**Answer:** I chose to skip `Exercise 4` due to lack of time.
+
+
+**Exercise 1:** Using the nycflights13 data. Note that it also contains a tibble called `airports` (as well as others). Use these two dataframes to find the answer to 3 of the following, and print them out in a separate chunk (i.e. the chunk should print the tibble, thus showing the first 10 lines of each):
+
+**Answer:**
+
+First of all, let's load the necessary libraries
+
+```{r, libs, eval=TRUE, warning=FALSE, message=FALSE, results='hide'}
+library(tidyverse)
+library(ggplot2)
+library(nycflights13)
+library(dplyr)
+```
+
+
+**The number of flights (in the whole year) to each destination**
+
+```{r, ex1, eval=TRUE, message=FALSE, warning=FALSE}
+flights %>%
+  group_by(year,dest) %>%
+  summarise(
+    count = n()
+  )
+```
+
+
+**The number and list of distinct airports in the US**
+
+The number of distinct airports in the US:
+
+```{r, ex12, eval=TRUE, message=FALSE, warning=FALSE}
+airports %>%
+  summarise(
+    nr_of_airports = n_distinct(name, na.rm = TRUE)
+  )
+```
+
+The list of distinct airports in the US along with how many times they are featured in the `airports` tibble:
+
+```{r, ex12, eval=TRUE, message=FALSE, warning=FALSE}
+airports %>%
+  group_by(name) %>%
+  summarise(
+    nr_of_times_featured = n_distinct(name, na.rm = TRUE)
+  )
+```
+
+**The number and list of distinct airports that have at least one flight in the whole year from NYC**
+
+The number of distinct airports that have at least one flight in the whole year from NYC
+
+```{r, ex13, eval=TRUE, message=FALSE, warning=FALSE}
+flights %>% 
+  filter(origin == 'JFK') %>%
+  summarise(
+    nr_of_times_featured = n_distinct(dest, na.rm = TRUE)
+  )
+```
+
+The list of distinct airports that have at least one flight in the whole year from NYC
+
+```{r, ex13, eval=TRUE, message=FALSE, warning=FALSE}
+flights %>% 
+  group_by(dest) %>%
+  filter(origin == 'JFK') %>%
+  summarise(
+    nr_of_times_featured = n_distinct(dest, na.rm = TRUE)
+  )
+```
+
+**Exercise 5:** Come up with an exercise to help you  -- and others -- learn `summarise` and `group_by` better. The more confused you are, the more you should simply try to come up with, or even copy, an example from somewhere and highlight what confuses you. Is it the order or arguments? Their role? If you are less confused, try to find a (non-obvious) use. Mention any resources used. 
+
+**Answer:** How much time did those planes (identified by tailnum) gain on average in air in a month which took off at least 30 minutes late but arrived earlier than scheduled time or on time?
+
+```{r, ex5, eval=TRUE, message=FALSE, warning=FALSE}
+flights %>%
+  group_by(year, month, tailnum) %>%
+  filter(dep_delay >= 30.0, arr_delay <= 0) %>%
+  summarise(gain_time_mean = mean(dep_delay, na.rm = TRUE) - mean(arr_delay, na.rm = TRUE))
+
+```
+
+**Exercise 6:** Work through sections 11.1 and 11.2 (skip exercises).
+
+**Answer:**
+
+**11.1 Prerequisites**
+
+```{r, lib2, eval=TRUE, warning=FALSE, message=FALSE, results='hide'}
+library(tidyverse)
+```
+
+**11.2 Getting started**
+
+Reading a csv
+
+```{r, read, eval=TRUE, message=FALSE, warning=FALSE}
+testdata3 <- read_csv("D:/Egyetem/CEU/Coding_1/R-Coding/lecture6/test-data3.csv")
+
+(testdata3)
+```
+
+Supplying inline csv
+
+```{r, inline, eval=TRUE, message=FALSE, warning=FALSE}
+read_csv("a,b,c
+1,2,3
+4,5,6")
+```
+
+Skipping the first n lines 
+
+```{r, skipper, eval=TRUE, message=FALSE, warning=FALSE}
+read_csv("First line of metadata goes here
+  Second line of metadata goes here
+  x,y,z
+  1,2,3", skip = 2)
+```
+
+Comments to skip
+
+```{r, comm, eval=TRUE, message=FALSE, warning=FALSE}
+read_csv("# A comment I want to skip
+  x,y,z
+  1,2,3", comment = "#")
+```
+
+
+When there are no column names
+
+```{r, nocol, eval=TRUE, message=FALSE, warning=FALSE}
+read_csv("1,2,3\n4,5,6", col_names = FALSE)
+```
+read_csv("1,2,3\n4,5,6", col_names = FALSE)
