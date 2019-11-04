@@ -22,8 +22,27 @@ Load each of these data sets that are in the lecture6 and lecture7 folders:
 # Your final command should be of this kind:
 # df1 <- read_csv("test-data1.csv", col_types = cols(...))
 
-df1 <- read_csv("test-data1.csv") # You have to fix this
+df1 <- read_csv("test-data1.csv", col_names=FALSE, 
+                 col_types = cols(
+                        col_double(),
+                        col_double(),
+                        col_double(),
+                        col_character(),
+                        col_logical()
+                      )) # You have to fix this
 
+#df2 <- read_csv("test-data2.csv", col_types = cols(
+#  name = col_character(),
+#  id = col_character(),
+#  gender = col_character()
+#))
+
+df2 <- read_csv("test-data2.csv", na = c("."))
+
+df3 <- read_csv("test-data3.csv", col_names = TRUE, col_types = "ccccc")
+head(df3)
+tail(df3)
+tail(read_csv("test-data3.csv", col_types="ccccc"))
 ```
 
 ### Chapter 12: Tidy Data (for next week)
@@ -40,13 +59,13 @@ library(tidyverse)
 table4a # This is defined 
 tidy4a <-  table4a %>%
   gather(`1999`, `2000`, key = "year", value = "cases")
-
+tidy4a
 tidy4b <- table4b %>%
   gather(`1999`, `2000`, key = "year", value = "population")
-
+tidy4b
 # We will see more on joins in the coming weeks
 tidy4 <- left_join(tidy4a, tidy4b)
-
+tidy4
 table2 %>% 
   spread(key = "type", value = "count")
 
@@ -59,6 +78,11 @@ stocks <- tibble(
 stocks %>%
   spread(key = year, value = return) %>%
   gather(key = "year", value = "return", `2015`, `2016`)
+
+
+stocks %>%
+  spread(key = half, value = return) %>%
+  rename(first_half = `1`, second_half = `2`)
 
 ```
 

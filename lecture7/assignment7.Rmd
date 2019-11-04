@@ -1,0 +1,245 @@
+---
+title: "Assignment 7"
+author: "Veronika Palotai"
+date: "11/2/2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Exercise 1**
+
+All done although setting up an existing directory as a project was a bit different from creating a completely new one. The necessary step were 'File' -> 'New Project' -> 'Existing Directory'.
+
+**Exercise 2**
+
+All done.
+
+**Exercise 3**
+
+Import Libraries
+
+```{r, packages_install, eval=TRUE, results='hide', message=FALSE, warning=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(scales)
+```
+
+- Import from csv
+
+Setting the Path
+
+```{r, path, eval=TRUE, results='hide', warning=FALSE, message=FALSE}
+dir <-  "D:/Egyetem/CEU/Coding_1/R-Coding/"
+```
+
+Location Folders
+
+```{r, loc, eval=TRUE, results='hide', warning=FALSE, message=FALSE}
+data_in <- paste0(dir,"da_data_repo/hotels-europe/clean/")
+```
+
+Loading Datasets 
+
+```{r, dataset, eval=TRUE, results='hide', warning=FALSE, message=FALSE}
+hotels_prices_csv <- read_csv(paste0(data_in,"hotels-europe_price.csv"))
+hotels_features_csv <- read_csv(paste0(data_in,"hotels-europe_features.csv"))
+```
+
+
+- Import from .dta
+
+Import 'haven' library and look up `read_dta`
+
+```{r, hav, eval=TRUE, warning=FALSE, message=FALSE, results='hide'}
+library(haven)
+?read_dta
+```
+
+Reading .dta files
+
+```{r, dta, eval=TRUE, message=FALSE, warning=FALSE, results='hide'}
+hotels_prices_dta <- read_dta(paste0(data_in,"hotels-europe_price.dta"), encoding = NULL)
+hotels_features_dta <- read_dta(paste0(data_in,"hotels-europe_features.dta"), encoding = NULL)
+```
+
+- Comparing contents
+
+First, let's look at the contents of the tables.
+
+```{r, comp, eval=TRUE, message=FALSE, warning=FALSE}
+View(hotels_features_dta)
+View(hotels_features_csv)
+View(hotels_prices_dta)
+View(hotels_prices_csv)
+```
+
+We can see that the order of the fields and the records are different. Let's check the length of each table to see whether they contain equal number of observations.
+
+```{r, length, eval=TRUE, message=FALSE, warning=FALSE}
+hotels_features_csv %>%
+  summarise(
+    nr_of_records = n()
+  )
+
+hotels_features_dta %>%
+  summarise(
+    nr_of_records = n()
+  )
+
+hotels_prices_csv %>%
+  summarise(
+    nr_of_records = n()
+  )
+
+hotels_prices_dta %>%
+  summarise(
+    nr_of_records = n()
+  )
+```
+
+As we can see, they contain the same number of records. Let's go into the details a bit and check the number of records for each city in the features table and each year in the prices table.
+
+```{r, length2, eval=TRUE, message=FALSE, warning=FALSE}
+hotels_features_csv %>%
+  group_by(city) %>%
+  summarise(
+    nr_of_records = n()
+  )
+
+hotels_features_dta %>%
+  group_by(city) %>%
+  summarise(
+    nr_of_records = n()
+  )
+
+hotels_prices_csv %>%
+  group_by(year) %>%
+  summarise(
+    nr_of_records = n()
+  )
+
+hotels_prices_dta %>%
+  group_by(year) %>%
+  summarise(
+    nr_of_records = n()
+  )
+```
+
+Most of the time they are the same in both tables, however, we can see a difference in case of 'Amsterdam' which might be due to a reading error. Since the overall number of records are the same, there has to be at least one other city with a difference.
+
+**Exercise 4**
+
+Picking the first 200 lines of the prices table
+
+```{r, subset, eval=TRUE, message=FALSE, warning=FALSE}
+(hotels_prices_csv_small <- hotels_prices_csv %>%
+  slice(1:200))
+```
+
+Writing to file
+
+```{r, wr, eval=TRUE, message=FALSE, warning=FALSE}
+write.csv(hotels_prices_csv_small, file = "hotels-europe-small.csv", row.names = FALSE)
+```
+
+- Lines changed: I deleted the field names
+
+- It lead to the problem that the contents of the first row were interpreted as column names
+
+- Fixing:
+
+```{r, re, eval=TRUE, message=FALSE, warning=FALSE}
+hotels_small <- read.csv("hotels-europe-small.csv", header = FALSE)
+# names columns as V1, V2, V3, ...
+```
+
+**Exercise 5**
+
+12.6 Case Study
+
+Load the dataset:
+
+```{r, case, eval=TRUE, warning=FALSE, message=FALSE}
+who <- tidyr::who
+```
+
+Gather together all the columns from `new_sp_m014` to `newrel_f65` because they are values not variables:
+
+```{r, gather, eval=TRUE, message=FALSE, warning=FALSE}
+who1 <- who %>% 
+  gather(new_sp_m014:newrel_f65, key = "key", value = "cases", na.rm = TRUE)
+```
+
+Some hint on the structure of the values in the new key column by counting them:
+
+```{r, cnt, eval=TRUE, message=FALSE, warning=FALSE}
+who1 %>% 
+  count(key)
+```
+
+Minor fix to the format of the column names:
+
+```{r, minfix, eval=TRUE, message=FALSE, warning=FALSE}
+who2 <- who1 %>% 
+  mutate(key = stringr::str_replace(key, "newrel", "new_rel"))
+```
+
+Separate the values in each code with two passes of `separate()`. The first pass will split the codes at each underscore.
+
+```{r, sep2, eval=TRUE, message=FALSE, warning=FALSE}
+who3 <- who2 %>% 
+  separate(key, c("new", "type", "sexage"), sep = "_")
+```
+
+Drop the 'new' column because it’s constant in this dataset. Let’s also drop 'iso2' and 'iso3' since they’re redundant.
+
+```{r, drop, eval=TRUE, message=FALSE, warning=FALSE}
+who3 %>% 
+  count(new)
+
+who4 <- who3 %>% 
+  select(-new, -iso2, -iso3)
+```
+
+Separate 'sexage' into 'sex' and 'age' by splitting after the first character:
+
+```{r, sep, eval=TRUE, message=FALSE, warning=FALSE}
+who5 <- who4 %>% 
+  separate(sexage, c("sex", "age"), sep = 1)
+```
+
+The 'who' dataset is now tidy, however, we could have done all these steps at the same time, like this:
+
+```{r, together, eval=TRUE, message=FALSE, warning=FALSE}
+who %>%
+  gather(key, value, new_sp_m014:newrel_f65, na.rm = TRUE) %>% 
+  mutate(key = stringr::str_replace(key, "newrel", "new_rel")) %>%
+  separate(key, c("new", "var", "sexage")) %>% 
+  select(-new, -iso2, -iso3) %>% 
+  separate(sexage, c("sex", "age"), sep = 1)
+```
+
+**Exercise 6**
+
+The dataset:
+
+```{r, data_exercise_t, eval=TRUE, message=FALSE, warning=FALSE}
+(df <- tibble(name = c("A123", "B456"), age = c(30, 60), answer1 = c(0, 1), answer2 = c(1,1), answer3 = c(1,0), answer4 = c(0,0)))
+```
+
+1. Cleaning by hand - description only 
+
+What needs to be done is to gather the columns 'answers1' to 'answers4' and create an 'answer_nr' (key) and an 'answer_value' (value) column for the answers and their corresponding values pertaining to a specific age group.
+
+2. Cleaning by coding it with `gather()`
+
+```{r, code, eval=TRUE, message=FALSE, warning=FALSE}
+tidy_df <- df %>%
+  gather(answer1:answer4, key="answer_nr", value="answer_value")
+tidy_df
+```
