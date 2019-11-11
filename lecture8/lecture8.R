@@ -1,5 +1,7 @@
 # Lecture 8
 
+library(tidyverse)
+library(nycflights13)
 
 # Tailnum is a primary key
 

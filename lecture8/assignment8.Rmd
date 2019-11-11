@@ -1,0 +1,123 @@
+---
+title: "Assignment 8"
+author: "Veronika Palotai"
+date: "11/10/2019"
+output:
+  html_document:
+    df_print: paged
+  pdf_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Exercise 1.** 
+
+Import Libraries
+
+```{r, packages_install, eval=TRUE, results='hide', message=FALSE, warning=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(scales)
+library(ggstance)
+library(modelr)
+library(gridExtra)
+library(ggpubr)
+```
+
+- Import from csv
+
+Setting the Path
+
+```{r, path, eval=TRUE, results='hide', warning=FALSE, message=FALSE}
+dir <-  "D:/Egyetem/CEU/Coding_1/R-Coding/"
+```
+
+Location Folders
+
+```{r, loc, eval=TRUE, results='hide', warning=FALSE, message=FALSE}
+data_in <- paste0(dir,"da_data_repo/hotels-europe/clean/")
+```
+
+Loading Datasets 
+
+```{r, dataset, eval=TRUE, results='hide', warning=FALSE, message=FALSE}
+hotels_prices <- read_csv(paste0(data_in,"hotels-europe_price.csv"))
+hotels_features <- read_csv(paste0(data_in,"hotels-europe_features.csv"))
+View(hotels_features)
+View(hotels_prices)
+```
+
+Joining the two datasets
+
+```{r, join2, eval=TRUE, message=FALSE, warning=FALSE}
+hotels <- hotels_features %>%
+  full_join(hotels_prices, by = "hotel_id")
+```
+
+Using anti-join to see which hotels do not have matches in the price data
+
+```{r, anti, eval=TRUE, message=FALSE, warning=FALSE}
+hotels_features %>% 
+  anti_join(hotels_prices, by = "hotel_id")
+```
+
+Looks like there is only one such row, the first which actually contains NA values only.
+
+
+**Exercise 2.** 
+
+```{r, exp1, eval=TRUE, message=FALSE, warning=FALSE}
+hotels %>% 
+  na.exclude() %>% 
+  ggplot(data = hotels, mapping = aes(x = distance, y = price)) + 
+  geom_point() + 
+  labs(x = "Distance", 
+       y = "Price", 
+       title = "Prices plotted against distance from city center")
+```
+
+```{r, exp2, eval=TRUE, message=FALSE, warning=FALSE}
+hotels %>% 
+  na.exclude() %>% 
+  ggplot(aes(x = stars, y = price)) + 
+  geom_boxplot(aes(group = stars), show.legend = T) + 
+  labs(x = "Stars", 
+       y = "Price", 
+       title = "Prices plotted against number of stars")
+```
+
+```{r, exp3, eval=TRUE, message=FALSE, warning=FALSE}
+hotels %>% 
+  na.exclude() %>% 
+  ggplot(aes(x = city, y = price)) + 
+  geom_boxplot(aes(group = city)) +  
+  ggpubr::rotate_x_text() +
+  labs(x = "City", 
+       y = "Price", 
+       title = "Prices plotted against city")
+```
+
+
+
+Come up with 3 models to explore what drives the price of 
+# hotels in Vienna. Plot the price of hotels against some of the main variables
+# that seem to have the most explanatory power.
+
+# Exercise 3. Look at the residuals from your favorite model. Now plot these 
+# against 3 variables that you didn't include earlier - or if you included all
+# plot them agains some variables in a form that you did not do before 
+# (squares, logs, interactions). Do the residuals look random? 
+
+# Exercise 4. Try to find out some methods to check if residuals are random and 
+# how to code this in R. Find at least two ways.
+
+# Exercise 5. Use your model estimated on Vienna to predict prices for another city.
+# How well does your model do, if you use the parameter values estimated on Vienna?
+
+# Exercise 6. Reestimate your favorite model (the same as from exercise 1) for
+# another city. How much do the parameter values change? How well does the model
+# do now? If you had to summarise the difference between the 2 cities in one 
+# number based on your model, what would it be?

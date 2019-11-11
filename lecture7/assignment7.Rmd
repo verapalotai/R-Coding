@@ -3,8 +3,8 @@ title: "Assignment 7"
 author: "Veronika Palotai"
 date: "11/2/2019"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}

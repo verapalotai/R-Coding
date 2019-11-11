@@ -1,28 +1,33 @@
-# Lecture 8
+# Lecture 8 (Chapter 13 in R4DS)
 
 library(tidyverse)
 library(nycflights13)
 
 planes
-# Tailnum is a primary key
+# Tailnum is a primary key, count for each tailnum how many we have
 planes %>%
   count(tailnum) %>%
   filter(n > 1)
+# we do not have any planes that share the same tailnum so it is a good primary key
 
 # Is flight number a primary key for a flight by day?
 flights %>%
   count(year, month, day, flight) %>%
   filter(n > 1)
+#this is not a primary key!!!
 
 # Add a primary key
-flights <- flights %>% 
+flights2 <- flights %>% 
   mutate(pkey = row_number()) %>%
   select(pkey, everything())
 
 ## Mutating Joins
 
-flights
+flights2
 airlines
+colnames(flights2)
+colnames(airlines)
+
 # Reduce number of cols to see what changes with joins
 flights2 <- flights %>%
   select(year:day, hour, origin, dest, carrier, tailnum)
@@ -39,7 +44,8 @@ y <- tibble(
   class = c("R Coding", "Information Economics", "Little R", "No class")
   )
 
-left_join(x, y)
+left_join(x,y)
+right_join(y,x) #same as above
 right_join(x,y)
 left_join(y, x)
 inner_join(x,y)
@@ -85,7 +91,7 @@ flights %>%
   arrange(r))
 
 flights %>%
-  semi_join(filter(ranked_dest, r <= 11))
+  semi_join(filter(ranked_dest, r <= 11)) #gives back a table with destinations that match one of the top 10
 flights %>% 
   filter(dest %in% ranked_dest$dest[ranked_dest$r <= 11])
 
@@ -123,6 +129,9 @@ library(modelr)
 library(ggplot2)
 library(tidyverse)
 
+# create a lot (250) of linear models of this kind:
+# y = a1 + a2 * x
+
 # sim1 dataset comes with modelr
 ggplot(sim1, aes(x,y)) + 
   geom_point()
@@ -134,7 +143,9 @@ ggplot(sim1, aes(x,y)) +
 ))
 
 ggplot(sim1, aes(x,y)) + 
-  geom_abline(data = models, aes(intercept= a1, slope= a2), alpha = 1/4) +
+  geom_abline(data = models, 
+              aes(intercept= a1, slope= a2), 
+              alpha = 1/4) +
   geom_point()
 
 # Take model and data and plots the model for all the x's in the data
