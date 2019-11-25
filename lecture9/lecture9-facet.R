@@ -21,8 +21,8 @@ coef(sim1_mod)
 # Add predictions and residuals to df
 # Convenience functions provided by modelr
 (df <- sim1 %>%
-  add_predictions(sim1_mod) %>%
-  add_residuals(sim1_mod))
+    add_predictions(sim1_mod) %>%
+    add_residuals(sim1_mod))
 
 # Plot the predicted points. Obviously they are on the line.
 ggplot(df, aes(x,y)) + 
@@ -39,9 +39,9 @@ ggplot(df, aes(x, resid)) +
 # You can also use predict and residuals from base R, but make sure you haven't
 # changed the order of the rows on the dataset.
 (df <- df %>%
-  mutate(
-    pred2 = predict(sim1_mod),
-    resid2 = residuals(sim1_mod)
+    mutate(
+      pred2 = predict(sim1_mod),
+      resid2 = residuals(sim1_mod)
     ))
 
 # New dataset to illustrate other linear models and how we can specify them
@@ -71,7 +71,7 @@ ggplot(sim3, aes(x = x1, y = y, color = x2)) +
 # into one column.
 
 (sim3 <- sim3 %>%
-  gather(key = model, value = pred, mod1, mod2))
+    gather(key = model, value = pred, mod1, mod2))
 
 ggplot(sim3, aes(x = x1, y = y, color = x2)) +
   geom_point() +
@@ -158,7 +158,7 @@ next_step <- function() {
 set.seed(42)
 x <- 0
 for (i in 1:25) {
-    x <- x + next_step()
+  x <- x + next_step()
 }
 x
 
@@ -264,47 +264,17 @@ hist(replicate(1e5, dices_sum()), breaks = 2:18)
 table(replicate(1e5, dices_sum()))
 barplot(table(replicate(1e5, dices_sum())))
 
-# Assignment
+# Appendix
 
-# Optional Exercise 0 for non-programmers (if you get stuck): 
-# If you wonder how to write functions, read chpater 19 in R4DS.
-#
-# Important note: It is very hard to write functions well, since at the deep level it is about
-# how to organize your code, which is about understanding what it is you want to do
-# and how to express this succinctly, clearly, and correctly. Defining a single simple function
-# is very easy - such as defining a function that computes the square. But knowing
-# which functions to write, how to make them play nicely with each other, how to not
-# repeat code, etc etc is hard. I say this so you realize that it is normal to be confused,
-# and to remain confused. I certainly am confused by some of the higher-level functions,
-# by modules/libraries/packages (which are a kind of mega-function), by macros (another
-# type of mega-function, but in a different direction), etc etc. So be patient with yourself,
-# try to take it one small step at a time and to get the job done, without expecting to 
-# understand everything.
-# 
-# Optional Exercise 0 (no need to report on it, but I recommend it for educational purposes): 
-# Read https://r4ds.had.co.nz/iteration.html#the-map-functions, section 21.5 on map functions,
-# especially if you come from imperative or object-oriented languages. If you know how to use
-# map functions, the pipe and functional style starts to become substantially more powerful,
-# while if you still think in OO ways, you will constantly fight the way the tidyverse works.
-# This is not to say that this type of functional programming is better, but that it is the
-# way the tidyverse is organized, and that it has a lot going for it. If after you grok maps
-# you still don't like it, that's fine. At least you know what you don't like.
+# OPTIONAL: For the curious, if you plan on writing functions with ggplot.
+# I'll skip it, since there is some rather esoteric stuff going on
+# to get it working. Namely, see the use of aes_ (note the underscore).
+# There is a tidy way (meaning to use the tidyverse way of thinking) to do it too.
+# Our plotting function is a little too specific
+# Let's pass in a list of BMs, and make sure to say what time to plot
 
-# Exercise 1: Map each coefficient from mod1 and mod2 to a feature of the plot 
-# with two facets. For instance, what is x1 in summaryd(mod2)? Where could you
-# read it off (roughly) from the graph? Etc for x1:x2b and so on. If you get
-# stuck, do ask for specific questions on Discourse. Correct answers for any 
-# parameter look like this:
-# x1 is the [slope/intercept/difference between slopes/intercepts of] for ... 
-# Since it is [positive/negative] this means that ... is [larger/smaller] than ...
-
-# Exercise 2: Do the faceting with gather_predictions and if needed with data_grid.
-# Look at chapter 23 for help.
-
-# Exercise 3: Read/Skim 21.2, 21.3, and 21.4 so you are aware of some issues.
-# Pick a short example from the notes that you feel you want to understand better
-# and use some other use case to illustrate it (using the Vienna data, or 
-# diamonds, or the same but in a different way.)
+# Read this in your own time if you want to know why you should *not*
+# use for loops with ggplot.
 
 plot_BMs_bug <- function(lbm, N) {
   p <- ggplot()
@@ -329,4 +299,3 @@ plot_BMs_bug(list_of_bms, 5)
 # The bug is somewhat subtle.
 # See https://stackoverflow.com/questions/26235825/for-loop-only-adds-the-final-ggplot-layer
 # Lesson: Do *not* put ggplot in a for loop. Bugs will ensue.
-

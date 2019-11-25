@@ -1,0 +1,380 @@
+---
+title: "Assignment 9"
+author: "Veronika Palotai"
+date: "11/20/2019"
+output:
+  pdf_document:
+    df_print: paged
+  html_document:
+    df_print: paged
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Exercise 1.** 
+
+Importing the necessary libraries.
+
+```{r, libs, eval=TRUE, message=FALSE, warning=FALSE}
+library(modelr)
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+```
+
+Adding mod1 and mod2 results and residulas to sim3
+
+```{r, mods, eval=TRUE, message=FALSE, warning=FALSE}
+mod1 <- lm(y ~ x1 + x2, data = sim3)
+mod2 <- lm(y ~ x1 * x2, data = sim3)
+
+(sim3 <- sim3 %>%
+  add_predictions(mod1, var = "mod1") %>%
+  add_predictions(mod2, var = "mod2") %>% 
+  add_residuals(mod1, var = "resid1") %>% 
+  add_residuals(mod2, var = "resid2"))
+```
+
+Summary of the two models
+
+```{r, mod1, eval=TRUE, message=FALSE, warning=FALSE}
+summary(mod1)
+```
+
+
+```{r, mod2, eval=TRUE, message=FALSE, warning=FALSE}
+summary(mod2)
+```
+
+Mapping coefficients
+
+```{r, maps, eval=TRUE, message=FALSE, warning=FALSE}
+# Plot model 1 lines
+ggplot(sim3, aes(x = x1, y = y, color = x2)) +
+  geom_point() +
+  geom_line(aes(y = mod1))
+
+# Plot model 2 lines
+ggplot(sim3, aes(x = x1, y = y, color = x2)) +
+  geom_point() +
+  geom_line(aes(y = mod2))
+
+sim3 <- sim3 %>%
+    gather(key = model, value = pred, mod1, mod2)
+
+ggplot(sim3, aes(x = x1, y = y, color = x2)) +
+  geom_point() +
+  geom_line(aes(y = pred)) +
+  facet_wrap(vars(model))
+```
+
+Based on the coefficients we can construct the linear functions fitted to the dataset
+
+Mod1:
+
+- Linear function fitted to datapoints where x2=a: `y = 1.8716659 - 0.1967378*x1`
+
+- Linear function fitted to datapoints where x2=b: `y = 1.8716659 - 0.1967378*x1 + 2.8878108*x2b`
+
+- Linear function fitted to datapoints where x2=c: `y = 1.8716659 - 0.1967378*x1 + 4.8057359*x2c`
+
+- Linear function fitted to datapoints where x2=d: `y = 1.8716659 - 0.1967378*x1 + 2.3595867*x2d`
+
+Explanation:
+
+- Intercept is the expected y value when x1 and x2 are both equal to 0
+
+- *-0.1967378* is the slope coefficient of x1 which shows that on average, y is *0.1967378* units smaller in the data for observations with one unit
+larger x1 but with the same x2.
+
+- *2.8878108* is the slope coefficient of x2 where x2=b. It shows that on average, y is *2.8878108* units larger in the data for observations with one unit larger x2 but with the same x1.
+
+- *4.8057359* is the slope coefficient of x2 where x2=c. It shows that on average, y is *4.8057359* units larger in the data for observations with one unit larger x2 but with the same x1.
+
+- *2.3595867* is the slope coefficient of x2 where x2=d. It shows that on average, y is *2.3595867* units larger in the data for observations with one unit larger x2 but with the same x1.
+
+
+Mod2:
+
+- Linear function fitted to datapoints where x2=a: `y =  1.30124266 - 0.09302444*x1`
+
+- Linear function fitted to datapoints where x2=b: `y =  1.30124266 - 0.09302444*x1 + 7.06937991*x2b - 0.76028528*(x1:x2b) = 1.30124266 - 0.85330972*x1 + 7.06937991*x2b`
+
+- Linear function fitted to datapoints where x2=c: `y =  1.30124266 - 0.09302444*x1 + 4.43089525*x2c +  0.06815284*(x1:x2c) = 1.30124266 - 0.0248716*x1 + 4.43089525*x2c`
+
+- Linear function fitted to datapoints where x2=d: `y =  1.30124266 - 0.09302444*x1 + 0.83455115*x2d + 0.27727920*(x1:x2d) = 1.30124266 + 0.18425476*x1 + 0.83455115*x2d`
+
+Explanation:
+
+- Intercept is the expected y value when x1 and x2 are both equal to 0. 
+
+- *-0.09302444* is the slope coefficient of x1 which shows that on average, y is *0.09302444* units smaller in the data for observations with one unit
+larger x1 but with the same x2. In this case this is only true when x2=a.
+
+- *7.06937991* is the slope coefficient of x2 where x2=b. It shows that on average, y is *7.06937991* units larger in the data for observations with one unit larger x2 but with the same x1.
+
+- *4.43089525* is the slope coefficient of x2 where x2=c. It shows that on average, y is *4.43089525* units larger in the data for observations with one unit larger x2 but with the same x1.
+
+- *0.83455115* is the slope coefficient of x2 where x2=d. It shows that on average, y is *0.83455115* units larger in the data for observations with one unit larger x2 but with the same x1.
+
+- *-0.76028528* is the difference between slope coefficients of x1 when x2=a and when x2=b. So when x2=b, the slope coefficient of x1 is *-0.85330972* which means that on average, y is *0.85330972* units smaller in the data for observations with one unit larger x1 but with the same x2, in this case it must be x2=b.
+
+- *0.06815284* is the difference between slope coefficients of x1 when x2=a and when x2=c. So when x2=c, the slope coefficient of x1 is *-0.0248716* which means that on average, y is *0.0248716* units smaller in the data for observations with one unit larger x1 but with the same x2, in this case it must be x2=c.
+
+- *0.27727920* is the difference between slope coefficients of x1 when x2=a and when x2=d. So when x2=d, the slope coefficient of x1 is *0.18425476* which means that on average, y is *0.18425476* units larger in the data for observations with one unit larger x1 but with the same x2, in this case it must be x2=d.
+
+
+**Exercise 2.**
+
+Faceting with `gather_predictions()`
+
+```{r, facet, eval=TRUE, message=FALSE, warning=FALSE}
+grid <- sim3 %>% 
+  data_grid(x1, x2) %>% 
+  gather_predictions(mod1, mod2)
+
+ggplot(sim3, aes(x1, y, colour = x2)) + 
+  geom_point() + 
+  geom_line(data = grid, aes(y = pred)) + 
+  facet_wrap(~ model)
+```
+
+**Exercise 3.**
+
+**21.2 For loops**
+
+Let's take a simple tibble
+
+```{r, tibb, eval=TRUE, message=FALSE, warning=FALSE}
+df <- tibble(
+  a = rnorm(10),
+  b = rnorm(10),
+  c = rnorm(10),
+  d = rnorm(10)
+)
+```
+
+If we want to compute the mean for each column, instead of copy pasting we could use a for loop:
+
+```{r, for, eval=TRUE, message=FALSE, warning=FALSE}
+output <- vector("double", ncol(df))  # 1. output
+for (i in seq_along(df)) {            # 2. sequence
+  output[[i]] <- median(df[[i]])      # 3. body
+}
+output
+```
+
+Every for loop has three components:
+
+- The output: output <- vector("double", length(x)). 
+
+- The sequence: i in seq_along(df). This determines what to loop over: each run of the for loop will assign i to a different value from seq_along(df). It’s useful to think of i as a pronoun, like “it”.
+
+- The body: output[[i]] <- median(df[[i]]). This is the code that does the work. It’s run repeatedly, each time with a different value for i. The first iteration will run output[[1]] <- median(df[[1]]), the second will run output[[2]] <- median(df[[2]]), and so on.
+
+
+**21.3 For loop variations**
+
+There are four variations on the basic theme of the for loop:
+
+1. Modifying an existing object, instead of creating a new object.
+
+```{r, modif, eval=TRUE, message=FALSE, warning=FALSE}
+df <- tibble(
+  a = rnorm(10),
+  b = rnorm(10),
+  c = rnorm(10),
+  d = rnorm(10)
+)
+rescale01 <- function(x) {
+  rng <- range(x, na.rm = TRUE)
+  (x - rng[1]) / (rng[2] - rng[1])
+}
+
+df$a <- rescale01(df$a)
+df$b <- rescale01(df$b)
+df$c <- rescale01(df$c)
+df$d <- rescale01(df$d)
+```
+
+
+2. Looping over names or values, instead of indices.
+
+- Loop over the elements: `for (x in xs)`. This is most useful if we only care about side-effects, like plotting or saving a file, because it’s difficult to save the output efficiently.
+
+- Loop over the names: `for (nm in names(xs))`. This gives us name, which we can use to access the value with `x[[nm]]`. This is useful if we want to use the name in a plot title or a file name. If we’re creating named output, we have to make sure to name the results vector like so:
+
+```{r, loop, eval=FALSE, message=FALSE, warning=FALSE}
+results <- vector("list", length(x))
+names(results) <- names(x)
+```
+
+
+3. Handling outputs of unknown length.
+
+Sometimes we might not know how long the output will be so we might be tempted to solve this problem by progressively growing the vector. A better solution to save the results in a list, and then combine into a single vector after the loop is done:
+
+```{r, list, eval=FALSE, message=FALSE, warning=FALSE}
+out <- vector("list", length(means))
+for (i in seq_along(means)) {
+  n <- sample(100, 1)
+  out[[i]] <- rnorm(n, means[[i]])
+}
+str(out)
+
+str(unlist(out))
+```
+
+4. Handling sequences of unknown length.
+
+Sometimes we don’t even know how long the input sequence should run for. This is common when doing simulations. We can’t do that sort of iteration with the for loop. Instead, we can use a while loop. A while loop is simpler than for loop because it only has two components, a condition and a body:
+
+```{r, while, eval=FALSE, message=FALSE, warning=FALSE}
+while (condition) {
+  # body
+}
+```
+
+A while loop is also more general than a for loop, because you can rewrite any for loop as a while loop, but you can’t rewrite every while loop as a for loop:
+
+```{r, notrewr, eval=FALSE, message=FALSE, warning=FALSE}
+for (i in seq_along(x)) {
+  # body
+}
+
+# Equivalent to
+i <- 1
+while (i <= length(x)) {
+  # body
+  i <- i + 1 
+}
+```
+
+Here’s how we could use a while loop to find how many tries it takes to get three heads in a row:
+
+```{r, flip, eval=TRUE, message=FALSE, warning=FALSE}
+flip <- function() sample(c("T", "H"), 1)
+
+flips <- 0
+nheads <- 0
+
+while (nheads < 3) {
+  if (flip() == "H") {
+    nheads <- nheads + 1
+  } else {
+    nheads <- 0
+  }
+  flips <- flips + 1
+}
+flips
+```
+
+**21.4 For loops vs. functionals**
+
+For loops are not as important in R as they are in other languages because R is a functional programming language. This means that it’s possible to wrap up for loops in a function, and call that function instead of using the for loop directly.
+
+To see why this is important, consider (again) this simple data frame:
+
+```{r, see, eval=TRUE, message=FALSE}
+df <- tibble(
+  a = rnorm(10),
+  b = rnorm(10),
+  c = rnorm(10),
+  d = rnorm(10)
+)
+```
+
+Imagine we want to compute the mean of every column. We could do that with a for loop:
+
+```{r, rwe, eval=TRUE, message=FALSE, warning=FALSE}
+output <- vector("double", length(df))
+for (i in seq_along(df)) {
+  output[[i]] <- mean(df[[i]])
+}
+output
+```
+
+We realise that we’re going to want to compute the means of every column pretty frequently, so extract it out into a function:
+
+```{r, rweda, eval=TRUE, message=FALSE, warning=FALSE}
+col_mean <- function(df) {
+  output <- vector("double", length(df))
+  for (i in seq_along(df)) {
+    output[i] <- mean(df[[i]])
+  }
+  output
+}
+```
+
+But then we think it’d also be helpful to be able to compute the median, and the standard deviation, so we copy and paste your col_mean() function and replace the mean() with median() and sd():
+
+```{r, rwadase, eval=TRUE, message=FALSE, warning=FALSE}
+col_median <- function(df) {
+  output <- vector("double", length(df))
+  for (i in seq_along(df)) {
+    output[i] <- median(df[[i]])
+  }
+  output
+}
+col_sd <- function(df) {
+  output <- vector("double", length(df))
+  for (i in seq_along(df)) {
+    output[i] <- sd(df[[i]])
+  }
+  output
+}
+```
+
+Uh oh! We’ve copied-and-pasted this code twice, so it’s time to think about how to generalise it. Notice that most of this code is for-loop boilerplate and it’s hard to see the one thing (mean(), median(), sd()) that is different between the functions.
+
+What would you do if you saw a set of functions like this:
+
+```{r, rwfdgre, eval=TRUE, message=FALSE, warning=FALSE}
+f1 <- function(x) abs(x - mean(x)) ^ 1
+f2 <- function(x) abs(x - mean(x)) ^ 2
+f3 <- function(x) abs(x - mean(x)) ^ 3
+```
+
+Hopefully, you’d notice that there’s a lot of duplication, and extract it out into an additional argument:
+
+```{r, rewrewe, eval=TRUE, message=FALSE, warning=FALSE}
+f <- function(x, i) abs(x - mean(x)) ^ i
+```
+
+You’ve reduced the chance of bugs (because you now have 1/3 of the original code), and made it easy to generalise to new situations.
+
+We can do exactly the same thing with col_mean(), col_median() and col_sd() by adding an argument that supplies the function to apply to each column:
+
+```{r, rafdaffwe, eval=TRUE, message=FALSE, warning=FALSE}
+col_summary <- function(df, fun) {
+  out <- vector("double", length(df))
+  for (i in seq_along(df)) {
+    out[i] <- fun(df[[i]])
+  }
+  out
+}
+col_summary(df, median)
+
+col_summary(df, mean)
+```
+
+
+**Short example**
+
+There were plenty of examples for for loops so I'm trying to see how the while function works by adding up prices of diamonds in the diamonds dataset:
+
+```{r, diamrrwe, eval=TRUE, message=FALSE, warning=FALSE}
+i <- 1
+
+sum_prices = 0
+
+while (i <= length(diamonds$price)) {
+  sum_prices <- sum_prices + diamonds$price[i]
+  i <- i + 1 
+}
+
+sum_prices
+```
